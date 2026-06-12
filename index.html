@@ -1,327 +1,216 @@
 <!DOCTYPE html>
 <html lang="ar" dir="rtl">
 <head>
-<meta charset="UTF-8"/>
-<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-<title>Delta Art — تشطيبات فاخرة</title>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>BuildOS — نظام إدارة التشطيبات</title>
+
+<!-- Firebase -->
 <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-database-compat.js"></script>
-<script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-storage-compat.js"></script>
-<link rel="preconnect" href="https://fonts.googleapis.com"/>
-<link href="https://fonts.googleapis.com/css2?family=Tajawal:wght@300;400;500;700;800;900&family=Playfair+Display:wght@700;800&display=swap" rel="stylesheet"/>
+
+<!-- React -->
+<script src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
+<script src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
+<script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+
 <style>
+@import url('https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700;800&family=Noto+Sans+Arabic:wght@300;400;500;600;700&display=swap');
 *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
 :root{
-  --gold:#c9a84c;--gold2:#e8c97a;--golddim:rgba(201,168,76,.15);
-  --dark:#0a0a0a;--dark2:#111118;--dark3:#18181f;--dark4:#20202a;
-  --txt:#f5f2ec;--txt2:#a89e8c;--txt3:#5e5a52;
-  --brd:rgba(201,168,76,.18);--brd2:rgba(201,168,76,.35);
-  --r:12px;--far:'Tajawal',sans-serif;--fen:'Playfair Display',serif;
+  --bg:#0f0f13;--bg2:#16161d;--bg3:#1e1e28;--bg4:#252530;
+  --accent:#f5a623;--accent2:#ffd166;--adim:rgba(245,166,35,.13);
+  --green:#10b981;--red:#ef4444;--blue:#3b82f6;--purple:#8b5cf6;--orange:#f59e0b;
+  --txt:#f0eff4;--txt2:#8b8b9e;--txt3:#5a5a6e;
+  --brd:rgba(255,255,255,.07);--brd2:rgba(255,255,255,.13);
+  --sh:0 4px 24px rgba(0,0,0,.4);--shlg:0 16px 64px rgba(0,0,0,.6);
+  --r:14px;--rs:8px;--sw:270px;
+  --far:'Noto Sans Arabic',sans-serif;--fen:'Syne',sans-serif;
 }
-html{scroll-behavior:smooth}
-body{font-family:var(--far);background:var(--dark);color:var(--txt);overflow-x:hidden;direction:rtl}
+body{font-family:var(--far);background:var(--bg);color:var(--txt);direction:rtl;overflow-x:hidden}
+#root{min-height:100vh}
 
-/* NAV */
-nav{position:fixed;top:0;right:0;left:0;z-index:100;padding:18px 5%;display:flex;justify-content:space-between;align-items:center;transition:all .4s;border-bottom:1px solid transparent}
-nav.scrolled{background:rgba(10,10,10,.95);border-bottom-color:var(--brd);backdrop-filter:blur(20px)}
-.logo{font-family:var(--fen);font-size:22px;font-weight:700;color:var(--gold);letter-spacing:2px}
-.logo span{color:var(--txt2);font-weight:400;font-size:12px;display:block;letter-spacing:4px;text-transform:uppercase;margin-top:-3px}
-.nav-cta{background:var(--gold);color:var(--dark);padding:9px 22px;border-radius:30px;font-weight:700;font-size:13px;text-decoration:none;transition:all .2s;white-space:nowrap}
-.nav-cta:hover{background:var(--gold2);transform:translateY(-1px)}
+/* loading */
+.ls{min-height:100vh;background:var(--bg);display:flex;align-items:center;justify-content:center;flex-direction:column;gap:20px}
+.ll{font-family:var(--fen);font-size:42px;font-weight:800;color:var(--accent);letter-spacing:-1px}
+.ll span{color:var(--txt3)}
+.spin{width:36px;height:36px;border:3px solid var(--adim);border-top-color:var(--accent);border-radius:50%;animation:spin .8s linear infinite}
+@keyframes spin{to{transform:rotate(360deg)}}
 
-/* HERO */
-.hero{min-height:100vh;display:flex;align-items:center;justify-content:center;text-align:center;position:relative;overflow:hidden;padding:120px 5% 80px}
-.hero-bg{position:absolute;inset:0;background:
-  radial-gradient(ellipse 80% 60% at 50% -5%,rgba(201,168,76,.18) 0%,transparent 60%),
-  radial-gradient(ellipse 50% 40% at 10% 80%,rgba(201,168,76,.08) 0%,transparent 50%),
-  linear-gradient(180deg,#0a0a0a 0%,#111118 100%);pointer-events:none}
-.hero-lines{position:absolute;inset:0;background-image:linear-gradient(var(--brd) 1px,transparent 1px),linear-gradient(90deg,var(--brd) 1px,transparent 1px);background-size:60px 60px;opacity:.3;pointer-events:none}
-.hero-eyebrow{display:inline-block;background:var(--golddim);border:1px solid var(--brd2);border-radius:30px;padding:7px 18px;font-size:11px;font-weight:700;color:var(--gold);letter-spacing:3px;text-transform:uppercase;margin-bottom:28px}
-.hero h1{font-family:var(--fen);font-size:clamp(42px,8vw,88px);font-weight:800;line-height:1.05;margin-bottom:22px;color:var(--txt)}
-.hero h1 em{font-style:normal;color:var(--gold);display:block}
-.hero p{font-size:18px;color:var(--txt2);max-width:560px;margin:0 auto 40px;line-height:1.7;font-weight:300}
-.hero-btns{display:flex;gap:14px;justify-content:center;flex-wrap:wrap}
-.btn-primary{background:var(--gold);color:var(--dark);padding:14px 32px;border-radius:40px;font-weight:800;font-size:15px;text-decoration:none;transition:all .25s;display:inline-flex;align-items:center;gap:8px}
-.btn-primary:hover{background:var(--gold2);transform:translateY(-2px);box-shadow:0 12px 40px rgba(201,168,76,.35)}
-.btn-ghost{border:1.5px solid var(--brd2);color:var(--txt);padding:13px 28px;border-radius:40px;font-weight:600;font-size:15px;text-decoration:none;transition:all .25s}
-.btn-ghost:hover{border-color:var(--gold);color:var(--gold)}
-.hero-scroll{position:absolute;bottom:32px;left:50%;transform:translateX(-50%);display:flex;flex-direction:column;align-items:center;gap:8px;color:var(--txt3);font-size:11px;letter-spacing:2px;text-transform:uppercase}
-.scroll-line{width:1px;height:50px;background:linear-gradient(var(--gold),transparent);animation:scrollDown 1.5s ease-in-out infinite}
-@keyframes scrollDown{0%{transform:scaleY(0);transform-origin:top}50%{transform:scaleY(1);transform-origin:top}51%{transform:scaleY(1);transform-origin:bottom}100%{transform:scaleY(0);transform-origin:bottom}}
+/* auth */
+.ap{min-height:100vh;background:var(--bg);display:flex;align-items:center;justify-content:center;position:relative}
+.ap::before{content:'';position:absolute;inset:0;background:radial-gradient(ellipse 60% 50% at 50% -10%,rgba(245,166,35,.12) 0%,transparent 70%);pointer-events:none}
+.ab{background:var(--bg2);border:1px solid var(--brd2);border-radius:20px;padding:44px 40px;width:440px;max-width:calc(100vw - 32px);box-shadow:var(--shlg);position:relative;z-index:1}
+.alt{font-family:var(--fen);font-size:36px;font-weight:800;color:var(--accent);letter-spacing:-1px;text-align:center}
+.als{font-size:12px;color:var(--txt3);text-align:center;letter-spacing:2px;text-transform:uppercase;margin-bottom:28px;margin-top:4px}
+.atabs{display:flex;background:var(--bg3);border-radius:10px;padding:4px;gap:4px;margin-bottom:24px}
+.atab{flex:1;padding:9px;text-align:center;border:none;background:transparent;color:var(--txt2);font-size:13px;font-weight:600;cursor:pointer;border-radius:8px;font-family:var(--far);transition:all .2s}
+.atab.act{background:var(--accent);color:var(--bg)}
 
-/* STATS */
-.stats{padding:50px 5%;display:grid;grid-template-columns:repeat(4,1fr);gap:1px;background:var(--brd);border-top:1px solid var(--brd);border-bottom:1px solid var(--brd)}
-.stat{background:var(--dark2);padding:32px 20px;text-align:center}
-.stat-n{font-family:var(--fen);font-size:42px;font-weight:700;color:var(--gold)}
-.stat-l{font-size:12px;color:var(--txt3);letter-spacing:2px;text-transform:uppercase;margin-top:4px}
-
-/* SERVICES */
-.section{padding:100px 5%}
-.sec-label{font-size:11px;letter-spacing:4px;text-transform:uppercase;color:var(--gold);margin-bottom:12px;font-weight:700}
-.sec-title{font-family:var(--fen);font-size:clamp(30px,5vw,52px);font-weight:800;line-height:1.1;margin-bottom:16px}
-.sec-sub{color:var(--txt2);font-size:16px;line-height:1.7;max-width:560px;font-weight:300}
-.services-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:2px;margin-top:60px}
-.svc{background:var(--dark3);padding:36px 28px;position:relative;overflow:hidden;transition:all .3s;cursor:default}
-.svc::before{content:'';position:absolute;bottom:0;right:0;left:0;height:3px;background:var(--gold);transform:scaleX(0);transform-origin:right;transition:transform .4s}
-.svc:hover{background:var(--dark4)}.svc:hover::before{transform:scaleX(1)}
-.svc-ico{font-size:36px;margin-bottom:18px}
-.svc-name{font-family:var(--fen);font-size:20px;font-weight:700;margin-bottom:10px;color:var(--txt)}
-.svc-desc{font-size:14px;color:var(--txt2);line-height:1.7;font-weight:300}
-.svc-tag{display:inline-block;background:var(--golddim);border:1px solid var(--brd);border-radius:4px;padding:3px 10px;font-size:11px;color:var(--gold);margin-top:14px;font-weight:600}
-
-/* WHY */
-.why-grid{display:grid;grid-template-columns:1fr 1fr;gap:60px;align-items:center;margin-top:60px}
-.why-visual{position:relative}
-.why-visual-inner{background:var(--dark3);border:1px solid var(--brd);border-radius:20px;padding:40px;text-align:center}
-.why-visual-num{font-family:var(--fen);font-size:120px;font-weight:800;color:var(--golddim);line-height:1;letter-spacing:-4px}
-.why-visual-label{font-size:13px;color:var(--txt2);letter-spacing:3px;text-transform:uppercase;margin-top:-10px}
-.why-badge{position:absolute;top:-16px;right:-16px;background:var(--gold);color:var(--dark);padding:14px 18px;border-radius:12px;font-weight:800;font-size:13px;text-align:center;line-height:1.3}
-.why-list{display:flex;flex-direction:column;gap:24px}
-.why-item{display:flex;gap:18px;align-items:flex-start}
-.why-icon{width:48px;height:48px;border-radius:12px;background:var(--golddim);border:1px solid var(--brd);display:flex;align-items:center;justify-content:center;font-size:22px;flex-shrink:0}
-.why-item h3{font-size:16px;font-weight:700;margin-bottom:5px}
-.why-item p{font-size:14px;color:var(--txt2);line-height:1.6;font-weight:300}
-
-/* FORM SECTION */
-.form-section{background:var(--dark2);border-top:1px solid var(--brd);border-bottom:1px solid var(--brd);padding:100px 5%}
-.form-wrap{display:grid;grid-template-columns:1fr 1.3fr;gap:80px;align-items:start;max-width:1100px;margin:0 auto}
-.form-info h2{font-family:var(--fen);font-size:clamp(28px,4vw,44px);font-weight:800;line-height:1.15;margin-bottom:20px}
-.form-info p{color:var(--txt2);font-size:15px;line-height:1.8;font-weight:300;margin-bottom:32px}
-.form-features{display:flex;flex-direction:column;gap:14px}
-.form-feat{display:flex;gap:12px;align-items:center;font-size:14px;color:var(--txt2)}
-.form-feat span:first-child{color:var(--gold);font-size:18px}
-.form-card{background:var(--dark3);border:1px solid var(--brd);border-radius:20px;padding:36px}
-.form-title{font-family:var(--fen);font-size:20px;font-weight:700;margin-bottom:6px}
-.form-sub{font-size:13px;color:var(--txt2);margin-bottom:28px}
-.fg{margin-bottom:16px}
-.fg label{display:block;font-size:11px;font-weight:700;color:var(--txt3);text-transform:uppercase;letter-spacing:1.5px;margin-bottom:6px}
-.fg input,.fg select,.fg textarea{width:100%;padding:12px 16px;background:var(--dark4);border:1.5px solid rgba(201,168,76,.15);border-radius:var(--r);font-size:14px;font-family:var(--far);color:var(--txt);outline:none;transition:border-color .2s;resize:vertical}
-.fg input:focus,.fg select:focus,.fg textarea:focus{border-color:var(--gold)}
-.fg select option{background:var(--dark3)}
+/* forms */
+.fg{margin-bottom:14px}
+.fg label{display:block;font-size:11px;font-weight:700;color:var(--txt3);text-transform:uppercase;letter-spacing:1.5px;margin-bottom:5px}
+.fg input,.fg select,.fg textarea{width:100%;padding:11px 14px;background:var(--bg3);border:1.5px solid var(--brd);border-radius:var(--rs);font-size:14px;font-family:var(--far);color:var(--txt);outline:none;transition:border-color .2s;resize:vertical}
+.fg input:focus,.fg select:focus,.fg textarea:focus{border-color:var(--accent)}
+.fg select option{background:var(--bg3)}
 .g2{display:grid;grid-template-columns:1fr 1fr;gap:14px}
-.upload-area{border:2px dashed rgba(201,168,76,.25);border-radius:var(--r);padding:28px;text-align:center;cursor:pointer;transition:all .2s;background:var(--dark4)}
-.upload-area:hover{border-color:var(--gold);background:var(--golddim)}
-.upload-area.drag{border-color:var(--gold);background:var(--golddim)}
-.upload-ico{font-size:32px;margin-bottom:10px}
-.upload-txt{font-size:14px;color:var(--txt2);font-weight:300}
-.upload-txt strong{color:var(--gold)}
-.upload-previews{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-top:12px}
-.preview-img{aspect-ratio:1;border-radius:8px;overflow:hidden;position:relative;background:var(--dark)}
-.preview-img img{width:100%;height:100%;object-fit:cover}
-.preview-img .rm{position:absolute;top:4px;left:4px;background:rgba(0,0,0,.7);border:none;color:white;width:22px;height:22px;border-radius:50%;cursor:pointer;font-size:12px;display:flex;align-items:center;justify-content:center}
-.submit-btn{width:100%;padding:16px;background:var(--gold);color:var(--dark);border:none;border-radius:40px;font-weight:800;font-size:16px;cursor:pointer;font-family:var(--far);transition:all .25s;margin-top:8px}
-.submit-btn:hover{background:var(--gold2);transform:translateY(-1px);box-shadow:0 10px 30px rgba(201,168,76,.3)}
-.submit-btn:disabled{opacity:.5;cursor:not-allowed;transform:none}
-.msg-success{background:rgba(16,185,129,.12);border:1px solid rgba(16,185,129,.3);border-radius:12px;padding:20px;text-align:center;color:#10b981;font-size:15px;margin-top:14px;display:none}
-.msg-error{background:rgba(239,68,68,.1);border:1px solid rgba(239,68,68,.3);border-radius:12px;padding:14px;color:#ef4444;font-size:13px;margin-bottom:12px;display:none}
-.progress-bar{height:4px;background:rgba(201,168,76,.2);border-radius:2px;overflow:hidden;margin-top:8px;display:none}
-.progress-fill{height:100%;background:var(--gold);width:0;transition:width .3s;border-radius:2px}
+.g3{display:grid;grid-template-columns:1fr 1fr 1fr;gap:12px}
+.rrow{display:flex;align-items:center;gap:8px;margin-bottom:14px;font-size:13px;color:var(--txt2);cursor:pointer}
+.rrow input{accent-color:var(--accent);width:15px;height:15px}
 
-/* FOOTER */
-footer{padding:50px 5% 30px;border-top:1px solid var(--brd);display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:20px}
-.foot-logo{font-family:var(--fen);font-size:18px;color:var(--gold);font-weight:700;letter-spacing:2px}
-.foot-copy{font-size:12px;color:var(--txt3)}
+/* buttons */
+.btn{display:inline-flex;align-items:center;justify-content:center;gap:7px;padding:10px 20px;border-radius:var(--rs);font-size:13px;font-weight:700;cursor:pointer;border:none;font-family:var(--far);transition:all .18s;white-space:nowrap}
+.ba{background:var(--accent);color:var(--bg)}.ba:hover{background:var(--accent2);transform:translateY(-1px)}
+.bg{background:transparent;border:1.5px solid var(--brd2);color:var(--txt)}.bg:hover{border-color:var(--accent);color:var(--accent)}
+.bd{background:rgba(239,68,68,.15);color:var(--red);border:1px solid rgba(239,68,68,.3)}.bd:hover{background:rgba(239,68,68,.25)}
+.bs{background:rgba(16,185,129,.15);color:var(--green);border:1px solid rgba(16,185,129,.3)}
+.bw{background:rgba(245,158,11,.15);color:var(--orange);border:1px solid rgba(245,158,11,.3)}
+.bsm{padding:6px 12px;font-size:12px;border-radius:6px}
+.bfl{width:100%}
+.btn:disabled{opacity:.4;cursor:not-allowed}
+.em{background:rgba(239,68,68,.1);color:var(--red);border:1px solid rgba(239,68,68,.3);padding:10px 14px;border-radius:8px;font-size:13px;margin-bottom:14px}
+.sm{background:rgba(16,185,129,.1);color:var(--green);border:1px solid rgba(16,185,129,.3);padding:10px 14px;border-radius:8px;font-size:13px;margin-bottom:14px}
 
-/* RESPONSIVE */
-@media(max-width:900px){
-  .services-grid{grid-template-columns:1fr 1fr}
-  .why-grid{grid-template-columns:1fr}
-  .form-wrap{grid-template-columns:1fr}
-  .stats{grid-template-columns:1fr 1fr}
-}
-@media(max-width:600px){
-  .services-grid{grid-template-columns:1fr}
-  .stats{grid-template-columns:1fr 1fr}
+/* layout */
+.lay{display:flex;min-height:100vh}
+.mhdr{display:none;position:fixed;top:0;right:0;left:0;height:56px;background:var(--bg2);border-bottom:1px solid var(--brd);z-index:200;align-items:center;padding:0 16px;gap:12px}
+.mhdr .mlogo{font-family:var(--fen);font-size:18px;font-weight:800;color:var(--accent);flex:1}
+.hbg{background:none;border:none;color:var(--txt2);font-size:20px;cursor:pointer}
+.sov{display:none;position:fixed;inset:0;background:rgba(0,0,0,.7);z-index:299}
+.sov.op{display:block}
+
+/* sidebar */
+.sb{width:var(--sw);background:var(--bg2);border-left:1px solid var(--brd);display:flex;flex-direction:column;position:fixed;height:100vh;right:0;top:0;z-index:100;overflow-y:auto}
+.sbl{padding:24px 20px 16px;border-bottom:1px solid var(--brd)}
+.sbl .lt{font-family:var(--fen);font-size:24px;font-weight:800;color:var(--accent)}
+.sbl .ls2{font-size:11px;color:var(--txt3);margin-top:2px;letter-spacing:1px}
+.sbu{padding:12px 20px;border-bottom:1px solid var(--brd)}
+.rb{display:inline-block;padding:3px 8px;border-radius:20px;font-size:10px;font-weight:700;letter-spacing:1px;margin-bottom:3px}
+.rb-sa{background:rgba(245,166,35,.2);color:var(--accent)}
+.rb-ow{background:rgba(59,130,246,.2);color:var(--blue)}
+.rb-mg{background:rgba(139,92,246,.2);color:var(--purple)}
+.rb-em{background:rgba(16,185,129,.2);color:var(--green)}
+.sbnav{flex:1;padding:10px 0}
+.nsc{padding:8px 20px 3px;font-size:10px;font-weight:700;color:var(--txt3);letter-spacing:2px;text-transform:uppercase;margin-top:6px}
+.ni{display:flex;align-items:center;gap:10px;padding:10px 20px;cursor:pointer;transition:all .15s;font-size:13px;font-weight:500;color:var(--txt2);border-right:3px solid transparent;margin:1px 0}
+.ni:hover{background:rgba(255,255,255,.04);color:var(--txt)}
+.ni.act{background:var(--adim);color:var(--accent);border-right-color:var(--accent)}
+.nic{font-size:15px;width:20px;text-align:center}
+.sbb{padding:14px 20px;border-top:1px solid var(--brd)}
+
+/* main */
+.main{margin-right:var(--sw);flex:1;padding:28px;background:var(--bg);min-height:100vh}
+.ph{margin-bottom:22px;display:flex;justify-content:space-between;align-items:flex-start;flex-wrap:wrap;gap:12px}
+.ph h1{font-family:var(--fen);font-size:26px;font-weight:800;color:var(--txt)}
+.ph p{color:var(--txt3);font-size:13px;margin-top:3px}
+.card{background:var(--bg2);border:1px solid var(--brd);border-radius:var(--r);padding:20px}
+.ct{font-family:var(--fen);font-size:14px;font-weight:700;margin-bottom:16px;color:var(--txt);display:flex;align-items:center;gap:8px}
+.mb16{margin-bottom:16px}.mb20{margin-bottom:20px}.mb24{margin-bottom:24px}
+.mt12{margin-top:12px}.mt16{margin-top:16px}
+
+/* stats */
+.sg{display:grid;grid-template-columns:repeat(auto-fit,minmax(155px,1fr));gap:12px;margin-bottom:18px}
+.sc{background:var(--bg2);border:1px solid var(--brd);border-radius:var(--r);padding:16px 18px;display:flex;align-items:center;gap:12px}
+.si{font-size:26px}.sv{font-family:var(--fen);font-size:22px;font-weight:800}.sl{font-size:10px;color:var(--txt3);margin-top:2px;text-transform:uppercase;letter-spacing:1px}
+.sa{border-top:3px solid var(--accent)}.sg2{border-top:3px solid var(--green)}.sb2{border-top:3px solid var(--blue)}.sr{border-top:3px solid var(--red)}.sp{border-top:3px solid var(--purple)}
+
+/* table */
+.tw{overflow-x:auto;-webkit-overflow-scrolling:touch}
+table{width:100%;border-collapse:collapse;min-width:480px}
+thead th{background:var(--bg3);padding:9px 12px;text-align:right;font-size:11px;color:var(--txt3);font-weight:700;text-transform:uppercase;letter-spacing:1px}
+tbody tr{border-bottom:1px solid var(--brd);transition:background .1s}
+tbody tr:hover{background:rgba(255,255,255,.02)}
+tbody td{padding:10px 12px;font-size:13px}
+
+/* badges */
+.bdg{display:inline-flex;align-items:center;padding:3px 9px;border-radius:20px;font-size:11px;font-weight:700}
+.ba2{background:rgba(245,166,35,.15);color:var(--accent)}
+.bg2{background:rgba(16,185,129,.15);color:var(--green)}
+.br2{background:rgba(239,68,68,.15);color:var(--red)}
+.bb2{background:rgba(59,130,246,.15);color:var(--blue)}
+.bgr{background:var(--bg3);color:var(--txt2)}
+.bpu{background:rgba(139,92,246,.15);color:var(--purple)}
+.bor{background:rgba(245,158,11,.15);color:var(--orange)}
+
+/* modal */
+.mo{position:fixed;inset:0;background:rgba(0,0,0,.75);display:flex;align-items:center;justify-content:center;z-index:999;padding:20px}
+.md{background:var(--bg2);border:1px solid var(--brd2);border-radius:20px;padding:26px;width:100%;max-width:540px;max-height:90vh;overflow-y:auto;box-shadow:var(--shlg)}
+.mhd{display:flex;justify-content:space-between;align-items:center;margin-bottom:20px}
+.mtt{font-family:var(--fen);font-size:17px;font-weight:800;color:var(--txt)}
+.mcl{background:none;border:none;color:var(--txt3);font-size:20px;cursor:pointer}
+.mcl:hover{color:var(--red)}
+
+/* chips */
+.chips{display:flex;flex-wrap:wrap;gap:7px;margin-top:5px}
+.chip{padding:6px 13px;border-radius:20px;font-size:12px;font-weight:600;background:var(--bg3);border:1.5px solid transparent;cursor:pointer;transition:all .15s;color:var(--txt2)}
+.chip.act{background:var(--adim);border-color:var(--accent);color:var(--accent)}
+.pcs{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:6px}
+.pc{padding:9px 12px;background:var(--bg3);border:1.5px solid transparent;border-radius:var(--rs);cursor:pointer;font-size:13px;font-weight:600;color:var(--txt2);display:flex;align-items:center;gap:8px;transition:all .15s}
+.pc.act{background:var(--adim);border-color:var(--accent);color:var(--accent)}
+
+/* search */
+.sw{position:relative}
+.si2{width:100%;padding:10px 38px 10px 14px;background:var(--bg3);border:1.5px solid var(--brd);border-radius:var(--rs);font-size:13px;font-family:var(--far);color:var(--txt);outline:none}
+.si2:focus{border-color:var(--accent)}
+.sic{position:absolute;right:12px;top:50%;transform:translateY(-50%);color:var(--txt3);font-size:14px;pointer-events:none}
+
+/* misc */
+.fb{display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:12px}
+.fg2{display:flex;gap:8px;flex-wrap:wrap;align-items:center}
+.es{text-align:center;padding:48px 24px;color:var(--txt3)}
+.ei{font-size:40px;margin-bottom:10px}
+.dv{height:1px;background:var(--brd);margin:16px 0}
+.ts{font-size:12px}.tx{font-size:11px}.tm{color:var(--txt3)}.ta{color:var(--accent)}.tg{color:var(--green)}.trd{color:var(--red)}
+.fb2{font-weight:700}.fen{font-family:var(--fen)}
+
+/* client card */
+.cc{background:var(--bg2);border:1px solid var(--brd);border-radius:var(--r);padding:14px 18px;display:flex;align-items:center;justify-content:space-between;transition:border-color .2s;flex-wrap:wrap;gap:10px}
+.cc:hover{border-color:var(--brd2)}
+.cav{width:40px;height:40px;border-radius:50%;background:var(--adim);border:2px solid var(--accent);color:var(--accent);display:flex;align-items:center;justify-content:center;font-family:var(--fen);font-size:14px;font-weight:800;flex-shrink:0}
+
+/* attendance */
+.ag{display:grid;grid-template-columns:repeat(auto-fill,minmax(175px,1fr));gap:10px}
+.ac{background:var(--bg3);border:1px solid var(--brd);border-radius:var(--rs);padding:12px}
+.an{font-weight:700;font-size:13px;margin-bottom:6px}
+.ab2{padding:5px 9px;border-radius:6px;font-size:11px;font-weight:700;cursor:pointer;border:1.5px solid transparent;font-family:var(--far);transition:all .15s;background:var(--bg4);color:var(--txt2)}
+
+/* bar chart */
+.bc{display:flex;align-items:flex-end;gap:6px;height:90px;margin-top:10px}
+.bcl{flex:1;display:flex;flex-direction:column;align-items:center;gap:3px;height:100%}
+.bcf{width:100%;background:var(--accent);border-radius:4px 4px 0 0;min-height:3px}
+.bclb{font-size:10px;color:var(--txt3)}
+
+/* invoice */
+.inv{background:white;color:#111;padding:36px;border-radius:12px;font-family:var(--far);direction:rtl}
+.invl{font-family:var(--fen);font-size:26px;font-weight:800;color:#f5a623}
+.invt th{background:#f5f5f5;padding:8px 12px;text-align:right;font-size:12px;font-weight:700;border:1px solid #eee}
+.invt td{padding:8px 12px;border:1px solid #eee;font-size:13px}
+
+@keyframes fadeUp{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:translateY(0)}}
+.fi{animation:fadeUp .25s ease}
+
+@media(max-width:768px){
+  .mhdr{display:flex}
+  .sb{transform:translateX(100%);z-index:300;transition:transform .3s}
+  .sb.op{transform:translateX(0)}
+  .main{margin-right:0!important;padding:68px 12px 24px}
+  .sg{grid-template-columns:1fr 1fr}
   .g2{grid-template-columns:1fr}
-  .hero h1{font-size:36px}
-  nav{padding:14px 5%}
+  .g3{grid-template-columns:1fr 1fr}
+  .mo{align-items:flex-end;padding:0}
+  .md{border-radius:20px 20px 0 0;max-width:100vw}
+  .ph h1{font-size:20px}
+}
+@media(max-width:480px){
+  .g3{grid-template-columns:1fr}
+  .ag{grid-template-columns:1fr 1fr}
 }
 </style>
 </head>
 <body>
-
-<!-- NAV -->
-<nav id="nav">
-  <div class="logo">Delta Art<span>تشطيبات فاخرة</span></div>
-  <a href="#contact" class="nav-cta">احجز استشارة مجانية ←</a>
-</nav>
-
-<!-- HERO -->
-<section class="hero" id="home">
-  <div class="hero-bg"></div>
-  <div class="hero-lines"></div>
-  <div style="position:relative;z-index:1">
-    <div class="hero-eyebrow">✦ تشطيبات راقية منذ 2010</div>
-    <h1>نحوّل مساحتك<em>إلى تحفة فنية</em></h1>
-    <p>من الجبس بورد والديكور إلى الدهانات والسيراميك — نقدم تشطيبات تجمع بين الجودة والذوق الرفيع</p>
-    <div class="hero-btns">
-      <a href="#contact" class="btn-primary">🏠 احصل على عرض سعر مجاناً</a>
-      <a href="#services" class="btn-ghost">اعرف خدماتنا</a>
-    </div>
-  </div>
-  <div class="hero-scroll"><div class="scroll-line"></div>اسكرول</div>
-</section>
-
-<!-- STATS -->
-<div class="stats">
-  <div class="stat"><div class="stat-n">+500</div><div class="stat-l">مشروع منجز</div></div>
-  <div class="stat"><div class="stat-n">14</div><div class="stat-l">سنة خبرة</div></div>
-  <div class="stat"><div class="stat-n">98%</div><div class="stat-l">رضا العملاء</div></div>
-  <div class="stat"><div class="stat-n">50+</div><div class="stat-l">فريق محترف</div></div>
-</div>
-
-<!-- SERVICES -->
-<section class="section" id="services">
-  <div class="sec-label">✦ خدماتنا</div>
-  <div style="display:grid;grid-template-columns:1fr 1fr;gap:20px;align-items:end">
-    <div>
-      <h2 class="sec-title">كل ما تحتاجه<br/>في مكان واحد</h2>
-    </div>
-    <p class="sec-sub">نقدم باقة متكاملة من خدمات التشطيب والديكور بأعلى معايير الجودة وأسعار تنافسية</p>
-  </div>
-  <div class="services-grid">
-    <div class="svc">
-      <div class="svc-ico">🏠</div>
-      <div class="svc-name">جبس بورد</div>
-      <div class="svc-desc">تصميم وتركيب أسقف جبس بورد بأشكال متنوعة — كلاسيك، مودرن، أو فيلا. نضمن الدقة والإتقان في كل تفصيلة</div>
-      <div class="svc-tag">متر مربع</div>
-    </div>
-    <div class="svc">
-      <div class="svc-ico">🎨</div>
-      <div class="svc-name">دهانات فاخرة</div>
-      <div class="svc-desc">دهانات ديكورية متنوعة — جداريات، تأثيرات، وأنظمة لون احترافية. نستخدم أفضل الخامات العالمية</div>
-      <div class="svc-tag">متر مربع</div>
-    </div>
-    <div class="svc">
-      <div class="svc-ico">💎</div>
-      <div class="svc-name">بديل رخام</div>
-      <div class="svc-desc">تركيب بانلات وتشطيبات بديل الرخام بأناقة عالية — للحوائط والأرضيات والواجهات</div>
-      <div class="svc-tag">متر مربع</div>
-    </div>
-    <div class="svc">
-      <div class="svc-ico">🌲</div>
-      <div class="svc-name">بديل خشب</div>
-      <div class="svc-desc">ألواح بديل الخشب للأسقف والحوائط والأرضيات — دفء الخشب بمتانة أطول وصيانة أسهل</div>
-      <div class="svc-tag">متر مربع</div>
-    </div>
-    <div class="svc">
-      <div class="svc-ico">🟫</div>
-      <div class="svc-name">سيراميك وبورسلين</div>
-      <div class="svc-desc">تركيب سيراميك وبورسلين بدقة عالية — حمامات، مطابخ، أرضيات وكل مساحاتك</div>
-      <div class="svc-tag">متر مربع</div>
-    </div>
-    <div class="svc">
-      <div class="svc-ico">⚡</div>
-      <div class="svc-name">كهرباء وسباكة</div>
-      <div class="svc-desc">تمديدات كهربائية وسباكة احترافية — من التخطيط للتنفيذ. أعمال نظيفة ومضمونة</div>
-      <div class="svc-tag">متر طولي</div>
-    </div>
-  </div>
-</section>
-
-<!-- WHY -->
-<section class="section" id="why" style="background:var(--dark2);border-top:1px solid var(--brd)">
-  <div class="sec-label">✦ ليه Delta Art؟</div>
-  <h2 class="sec-title">جودة لا تقبل<br/>المساومة</h2>
-  <div class="why-grid">
-    <div class="why-visual">
-      <div class="why-visual-inner">
-        <div class="why-visual-num">14</div>
-        <div class="why-visual-label">سنة من الإتقان</div>
-      </div>
-      <div class="why-badge">مشاريع تسلم<br/>في موعدها ✓</div>
-    </div>
-    <div class="why-list">
-      <div class="why-item">
-        <div class="why-icon">🏆</div>
-        <div><h3>خبرة 14 سنة</h3><p>أكثر من 500 مشروع منجز في القاهرة الكبرى — تجربة تجعلنا نتوقع المشاكل قبل ما تحصل</p></div>
-      </div>
-      <div class="why-item">
-        <div class="why-icon">📐</div>
-        <div><h3>دقة في التسعير</h3><p>عرض سعر شفاف ومفصل — بالمتر والخامات والعمالة. مفيش أرقام مخفية أو مفاجآت</p></div>
-      </div>
-      <div class="why-item">
-        <div class="why-icon">⏱️</div>
-        <div><h3>التزام بالمواعيد</h3><p>98% من مشاريعنا بتتسلم في الموعد المحدد — نحترم وقتك ووقت عمليتك</p></div>
-      </div>
-      <div class="why-item">
-        <div class="why-icon">🛡️</div>
-        <div><h3>ضمان الجودة</h3><p>كل شغلنا عليه ضمان — لو في أي ملاحظة بعد التسليم، بنيجي ونصلح بدون نقاش</p></div>
-      </div>
-    </div>
-  </div>
-</section>
-
-<!-- CONTACT FORM -->
-<section class="form-section" id="contact">
-  <div class="form-wrap">
-    <div class="form-info">
-      <div class="sec-label">✦ ابدأ مشروعك</div>
-      <h2 class="form-info-title">احصل على عرض سعر<br/><span style="color:var(--gold)">مجاناً خلال 24 ساعة</span></h2>
-      <p>سيبلنا بياناتك وصور المكان — وهنتواصل معاك بأسرع وقت بعرض سعر مفصل ومناسب لميزانيتك</p>
-      <div class="form-features">
-        <div class="form-feat"><span>✦</span><span>معاينة مجانية في منزلك</span></div>
-        <div class="form-feat"><span>✦</span><span>عرض سعر مفصل خلال 24 ساعة</span></div>
-        <div class="form-feat"><span>✦</span><span>استشارة هندسية بدون رسوم</span></div>
-        <div class="form-feat"><span>✦</span><span>التزام بالسعر المتفق عليه</span></div>
-      </div>
-    </div>
-    <div class="form-card">
-      <div class="form-title">طلب عرض سعر</div>
-      <div class="form-sub">كل المعلومات سرية ولن تشارك مع أي طرف آخر</div>
-      <div id="errMsg" class="msg-error"></div>
-      <div class="g2">
-        <div class="fg"><label>الاسم الكامل *</label><input id="fname" type="text" placeholder="محمد أحمد"/></div>
-        <div class="fg"><label>رقم الهاتف *</label><input id="fphone" type="tel" placeholder="01xxxxxxxxx"/></div>
-      </div>
-      <div class="g2">
-        <div class="fg">
-          <label>الخدمة المطلوبة *</label>
-          <select id="fservice">
-            <option value="">— اختار الخدمة —</option>
-            <option>جبس بورد</option>
-            <option>دهانات</option>
-            <option>بديل رخام</option>
-            <option>بديل خشب</option>
-            <option>سيراميك وبورسلين</option>
-            <option>كهرباء وسباكة</option>
-            <option>تشطيب كامل</option>
-          </select>
-        </div>
-        <div class="fg"><label>المساحة التقريبية (م²)</label><input id="farea" type="number" placeholder="120"/></div>
-      </div>
-      <div class="fg"><label>العنوان أو المنطقة *</label><input id="flocation" type="text" placeholder="مدينة نصر، شقة 3 غرف"/></div>
-      <div class="fg"><label>تفاصيل إضافية</label><textarea id="fmessage" rows="3" placeholder="أي تفاصيل مهمة عن المشروع — نوع التشطيب، الميزانية، الموعد المطلوب..."></textarea></div>
-      <div class="fg">
-        <label>صور المكان (اختياري)</label>
-        <div class="upload-area" id="uploadArea" onclick="document.getElementById('fimages').click()">
-          <div class="upload-ico">📷</div>
-          <div class="upload-txt">اسحب الصور هنا أو <strong>اضغط للرفع</strong></div>
-          <div class="upload-txt" style="font-size:12px;margin-top:4px">JPG, PNG — حتى 5 صور</div>
-        </div>
-        <input type="file" id="fimages" multiple accept="image/*" style="display:none"/>
-        <div class="upload-previews" id="previews"></div>
-        <div class="progress-bar" id="progressBar"><div class="progress-fill" id="progressFill"></div></div>
-      </div>
-      <button class="submit-btn" id="submitBtn" onclick="submitLead()">إرسال الطلب ←</button>
-      <div class="msg-success" id="successMsg">
-        ✅ تم إرسال طلبك بنجاح!<br/>
-        <span style="font-size:13px;opacity:.8">سنتواصل معك خلال 24 ساعة على رقمك</span>
-      </div>
-    </div>
-  </div>
-</section>
-
-<!-- FOOTER -->
-<footer>
-  <div class="foot-logo">Delta Art</div>
-  <div class="foot-copy">© 2024 Delta Art — جميع الحقوق محفوظة</div>
-</footer>
+<div id="root"></div>
 
 <script>
-// ===== CONFIG — غير الـ shopId بتاع شركتك في BuildOS =====
-const SHOP_ID = "shop_1781219895187"; // مثال: shop_1234567890
-
 const firebaseConfig = {
   apiKey: "AIzaSyCOBaMkl_j-dwFiq85ioDjwVipvLCA61AA",
   authDomain: "buildos-42ba1.firebaseapp.com",
@@ -329,103 +218,1135 @@ const firebaseConfig = {
   projectId: "buildos-42ba1",
   storageBucket: "buildos-42ba1.firebasestorage.app",
   messagingSenderId: "149653468755",
-  appId: "1:149653468755:web:a639f019e871880f88b8a6"
+  appId: "1:149653468755:web:a639f019e871880f88b8a6",
+  measurementId: "G-82J7V8MZX4"
 };
 firebase.initializeApp(firebaseConfig);
-const db      = firebase.database();
-const storage = firebase.storage();
+const db = firebase.database();
 
-// NAV scroll
-window.addEventListener('scroll',()=>{
-  document.getElementById('nav').classList.toggle('scrolled',window.scrollY>50);
-});
+const fbGet  = (path) => db.ref(path).get().then(s => s.exists() ? s.val() : null);
+const fbSet  = (path, val) => db.ref(path).set(val);
+const fbUpd  = (path, val) => db.ref(path).update(val);
+const fbDel  = (path) => db.ref(path).remove();
+const fbOn   = (path, cb) => { const ref = db.ref(path); ref.on('value', s => cb(s.exists() ? s.val() : null)); return () => ref.off(); };
+</script>
 
-// Drag & drop
-const ua = document.getElementById('uploadArea');
-const inp = document.getElementById('fimages');
-ua.addEventListener('dragover',e=>{e.preventDefault();ua.classList.add('drag');});
-ua.addEventListener('dragleave',()=>ua.classList.remove('drag'));
-ua.addEventListener('drop',e=>{e.preventDefault();ua.classList.remove('drag');addFiles(e.dataTransfer.files);});
-inp.addEventListener('change',()=>addFiles(inp.files));
+<script type="text/babel">
+const { useState, useEffect, useRef } = React;
 
-let selectedFiles=[];
-function addFiles(files){
-  const arr=Array.from(files);
-  selectedFiles=[...selectedFiles,...arr].slice(0,5);
-  renderPreviews();
-}
-function renderPreviews(){
-  const pc=document.getElementById('previews');
-  pc.innerHTML='';
-  selectedFiles.forEach((f,i)=>{
-    const r=new FileReader();
-    r.onload=e=>{
-      const d=document.createElement('div');
-      d.className='preview-img';
-      d.innerHTML=`<img src="${e.target.result}"/><button class="rm" onclick="removeFile(${i})">✕</button>`;
-      pc.appendChild(d);
+const getNow = () => { const n=new Date(); return new Date(n.getTime()+n.getTimezoneOffset()*60000+2*3600000); };
+const today     = () => getNow().toISOString().slice(0,10);
+const thisMonth = () => getNow().toISOString().slice(0,7);
+const getTime   = () => getNow().toTimeString().slice(0,5);
+const genId = (ex=[]) => { let id; do{id=Math.random().toString(36).slice(2,8).toUpperCase();}while(ex.includes(id)); return id; };
+
+const PMS = [
+  {id:"cash",label:"كاش",icon:"💵"},
+  {id:"vodafone",label:"Vodafone Cash",icon:"📱"},
+  {id:"instapay",label:"InstaPay",icon:"⚡"},
+  {id:"visa",label:"Visa",icon:"💳"},
+  {id:"transfer",label:"تحويل بنكي",icon:"🏦"},
+];
+const ATTS = [
+  {id:"present",label:"حاضر",color:"#10b981"},
+  {id:"absent",label:"غائب",color:"#ef4444"},
+  {id:"late",label:"متأخر",color:"#f59e0b"},
+  {id:"leave",label:"إجازة",color:"#6366f1"},
+];
+
+const seed = async () => {
+  const ex = await fbGet("users/superadmin");
+  if(ex) return;
+  await fbSet("users/superadmin",{id:"superadmin",username:"admin",password:"admin123",role:"superadmin",name:"Super Admin",active:true});
+};
+
+/* ===== SHARED COMPONENTS ===== */
+const Modal = ({title,onClose,children}) => (
+  <div className="mo" onClick={e=>e.target===e.currentTarget&&onClose()}>
+    <div className="md fi">
+      {title&&<div className="mhd"><h2 className="mtt">{title}</h2><button className="mcl" onClick={onClose}>✕</button></div>}
+      {children}
+    </div>
+  </div>
+);
+const Empty = ({icon,text}) => <div className="es"><div className="ei">{icon}</div><p>{text}</p></div>;
+const StatCard = ({icon,val,lbl,cls}) => (
+  <div className={`sc ${cls}`}><span className="si">{icon}</span><div><div className="sv">{val}</div><div className="sl">{lbl}</div></div></div>
+);
+
+/* ===== APP ===== */
+function App(){
+  const [user,setUser]   = useState(null);
+  const [page,setPage]   = useState("dashboard");
+  const [msg,setMsg]     = useState(null);
+  const [sbOpen,setSb]   = useState(false);
+  const [loading,setLd]  = useState(true);
+
+  useEffect(()=>{
+    const init = async()=>{
+      await seed();
+      const sv = localStorage.getItem("buildos_s");
+      if(sv){
+        try{
+          const s=JSON.parse(sv);
+          const u=await fbGet(`users/${s.id}`);
+          if(u&&u.active!==false) setUser(u);
+        }catch(e){}
+      }
+      setLd(false);
     };
-    r.readAsDataURL(f);
-  });
+    init();
+  },[]);
+
+  const showMsg=(t,tp="success")=>{setMsg({t,tp});setTimeout(()=>setMsg(null),3500)};
+  const doLogin=(u,rem)=>{setUser(u);if(rem)localStorage.setItem("buildos_s",JSON.stringify({id:u.id}))};
+  const doLogout=()=>{localStorage.removeItem("buildos_s");setUser(null);setPage("dashboard")};
+
+  if(loading) return <div className="ls"><div className="ll">Build<span>OS</span></div><div className="spin"/><div style={{color:"var(--txt3)",fontSize:13}}>جاري التحميل...</div></div>;
+  if(!user)   return <AuthPage onLogin={doLogin}/>;
+
+  return (
+    <div className="lay fi">
+      <div className="mhdr">
+        <button className="hbg" onClick={()=>setSb(true)}>☰</button>
+        <div className="mlogo">BuildOS</div>
+      </div>
+      <div className={`sov ${sbOpen?"op":""}`} onClick={()=>setSb(false)}/>
+      <Sidebar user={user} page={page} setPage={p=>{setPage(p);setSb(false)}} onLogout={doLogout} isOpen={sbOpen}/>
+      <main className="main">
+        {msg&&<div className={msg.tp==="error"?"em":"sm"} style={{marginBottom:14}}>{msg.t}</div>}
+        {page==="dashboard"  && <DashPage user={user}/>}
+        {page==="clients"    && <ClientsPage user={user} showMsg={showMsg}/>}
+        {page==="leads"      && <LeadsPage user={user} showMsg={showMsg}/>}
+        {page==="projects"   && <ProjectsPage user={user} showMsg={showMsg}/>}
+        {page==="products"   && <ProductsPage user={user} showMsg={showMsg}/>}
+        {page==="invoices"   && <InvoicesPage user={user} showMsg={showMsg}/>}
+        {page==="employees"  && (user.role==="owner"||user.role==="manager"||user.role==="superadmin") && <EmpPage user={user} showMsg={showMsg}/>}
+        {page==="attendance" && <AttPage user={user} showMsg={showMsg}/>}
+        {page==="revenue"    && (user.role==="owner"||user.role==="superadmin") && <RevPage user={user}/>}
+        {page==="shops"      && user.role==="superadmin" && <ShopsPage showMsg={showMsg}/>}
+        {page==="users"      && user.role==="superadmin" && <UsersPage showMsg={showMsg}/>}
+        {page==="settings"   && <SettingsPage user={user} showMsg={showMsg}/>}
+      </main>
+    </div>
+  );
 }
-function removeFile(i){selectedFiles.splice(i,1);renderPreviews();}
 
-async function submitLead(){
-  const name    = document.getElementById('fname').value.trim();
-  const phone   = document.getElementById('fphone').value.trim();
-  const service = document.getElementById('fservice').value;
-  const area    = document.getElementById('farea').value;
-  const location= document.getElementById('flocation').value.trim();
-  const message = document.getElementById('fmessage').value.trim();
-  const errEl   = document.getElementById('errMsg');
-  const btn     = document.getElementById('submitBtn');
+/* ===== AUTH ===== */
+function AuthPage({onLogin}){
+  const [tab,setTab]=useState("login");
+  const [form,setForm]=useState({username:"",password:"",shopName:"",ownerName:""});
+  const [err,setErr]=useState("");const [ld,setLd]=useState(false);const [rem,setRem]=useState(true);
+  const h=(f,v)=>setForm(x=>({...x,[f]:v}));
 
-  errEl.style.display='none';
-  if(!name||!phone||!service||!location){
-    errEl.textContent='من فضلك ملء جميع الحقول المطلوبة *';
-    errEl.style.display='block';return;
-  }
+  const login=async()=>{
+    setErr("");setLd(true);
+    const users=await fbGet("users");
+    if(!users){setErr("لا يوجد مستخدمين");setLd(false);return;}
+    const u=Object.values(users).find(u=>u.username===form.username&&u.password===form.password);
+    if(!u){setErr("اسم المستخدم أو كلمة المرور غلط");setLd(false);return;}
+    if(u.pending){setErr("حسابك في انتظار الموافقة");setLd(false);return;}
+    if(u.active===false){setErr("هذا الحساب موقوف");setLd(false);return;}
+    onLogin(u,rem);setLd(false);
+  };
 
-  btn.disabled=true;btn.textContent='جاري الإرسال...';
+  const signup=async()=>{
+    setErr("");setLd(true);
+    if(!form.shopName||!form.username||!form.password||!form.ownerName){setErr("ارجاء ملء كل الحقول");setLd(false);return;}
+    const users=await fbGet("users");
+    if(users&&Object.values(users).find(u=>u.username===form.username)){setErr("اسم المستخدم موجود");setLd(false);return;}
+    const sid="shop_"+Date.now(),uid="u_"+Date.now();
+    await fbSet(`shops/${sid}`,{id:sid,name:form.shopName,ownerName:form.ownerName,createdAt:today(),active:true});
+    await fbSet(`users/${uid}`,{id:uid,username:form.username,password:form.password,role:"owner",name:form.ownerName,shopId:sid,active:true});
+    setTab("login");setLd(false);
+  };
 
-  // Upload images
-  let photoURLs=[];
-  if(selectedFiles.length>0){
-    const pb=document.getElementById('progressBar');
-    const pf=document.getElementById('progressFill');
-    pb.style.display='block';
-    for(let i=0;i<selectedFiles.length;i++){
-      const ref=storage.ref(`leads/${SHOP_ID}/${Date.now()}_${i}_${selectedFiles[i].name}`);
-      await ref.put(selectedFiles[i]);
-      const url=await ref.getDownloadURL();
-      photoURLs.push(url);
-      pf.style.width=`${((i+1)/selectedFiles.length)*100}%`;
+  return (
+    <div className="ap">
+      <div className="ab">
+        <div className="alt">BuildOS</div>
+        <div className="als">Construction &amp; Finishing Management</div>
+        <div className="atabs">
+          <button className={`atab ${tab==="login"?"act":""}`} onClick={()=>setTab("login")}>تسجيل الدخول</button>
+          <button className={`atab ${tab==="signup"?"act":""}`} onClick={()=>setTab("signup")}>شركة جديدة</button>
+        </div>
+        {err&&<div className="em">{err}</div>}
+        {tab==="login"?(
+          <>
+            <div className="fg"><label>اسم المستخدم</label><input value={form.username} onChange={e=>h("username",e.target.value)}/></div>
+            <div className="fg"><label>كلمة المرور</label><input type="password" value={form.password} onChange={e=>h("password",e.target.value)} onKeyDown={e=>e.key==="Enter"&&login()}/></div>
+            <label className="rrow"><input type="checkbox" checked={rem} onChange={e=>setRem(e.target.checked)}/>ابقى متسجل</label>
+            <button className="btn ba bfl" onClick={login} disabled={ld}>{ld?"جاري الدخول...":"دخول ←"}</button>
+          </>
+        ):(
+          <>
+            <div className="fg"><label>اسم الشركة</label><input value={form.shopName} onChange={e=>h("shopName",e.target.value)}/></div>
+            <div className="fg"><label>اسم صاحب الشركة</label><input value={form.ownerName} onChange={e=>h("ownerName",e.target.value)}/></div>
+            <div className="g2">
+              <div className="fg"><label>اسم المستخدم</label><input value={form.username} onChange={e=>h("username",e.target.value)}/></div>
+              <div className="fg"><label>كلمة المرور</label><input type="password" value={form.password} onChange={e=>h("password",e.target.value)}/></div>
+            </div>
+            <label className="rrow"><input type="checkbox" checked={rem} onChange={e=>setRem(e.target.checked)}/>ابقى متسجل</label>
+            <button className="btn ba bfl" onClick={signup} disabled={ld}>{ld?"جاري الإنشاء...":"إنشاء الشركة 🏗️"}</button>
+          </>
+        )}
+      </div>
+    </div>
+  );
+}
+
+/* ===== SIDEBAR ===== */
+function Sidebar({user,page,setPage,onLogout,isOpen}){
+  const ownerNav=[
+    {sec:"الرئيسية"},{id:"dashboard",ic:"📊",lb:"لوحة التحكم"},
+    {sec:"العمليات"},{id:"clients",ic:"👥",lb:"العملاء"},{id:"leads",ic:"📬",lb:"طلبات الموقع"},
+    {id:"projects",ic:"🏗️",lb:"المشاريع"},
+    {id:"products",ic:"📦",lb:"المنتجات والمواد"},
+    {id:"invoices",ic:"🧾",lb:"الفواتير"},
+    {sec:"الموظفين"},{id:"employees",ic:"👤",lb:"الموظفين"},
+    {id:"attendance",ic:"📅",lb:"الحضور والغياب"},
+    {sec:"المالية"},{id:"revenue",ic:"💰",lb:"الإيرادات"},
+    {sec:"النظام"},{id:"settings",ic:"⚙️",lb:"الإعدادات"},
+  ];
+  const empNav=[{id:"dashboard",ic:"📊",lb:"إحصائياتي"},{id:"attendance",ic:"📅",lb:"حضوري"},{id:"settings",ic:"⚙️",lb:"الإعدادات"}];
+  const supNav=[{id:"dashboard",ic:"📊",lb:"لوحة التحكم"},{id:"shops",ic:"🏢",lb:"الشركات"},{id:"users",ic:"👥",lb:"المستخدمين"},{id:"settings",ic:"⚙️",lb:"الإعدادات"}];
+  const nav=user.role==="superadmin"?supNav:user.role==="employee"?empNav:ownerNav;
+  const rl={superadmin:"Super Admin",owner:"صاحب الشركة",manager:"مدير",employee:"موظف"}[user.role]||user.role;
+  const rc={superadmin:"rb-sa",owner:"rb-ow",manager:"rb-mg",employee:"rb-em"}[user.role]||"rb-sa";
+  return (
+    <aside className={`sb ${isOpen?"op":""}`}>
+      <div className="sbl"><div className="lt">BuildOS</div><div className="ls2">نظام إدارة التشطيبات</div></div>
+      <div className="sbu"><span className={`rb ${rc}`}>{rl}</span><div style={{fontSize:13,marginTop:2}}>{user.name}</div></div>
+      <nav className="sbnav">
+        {nav.map((item,i)=>item.sec
+          ? <div key={i} className="nsc">{item.sec}</div>
+          : <div key={item.id} className={`ni ${page===item.id?"act":""}`} onClick={()=>setPage(item.id)}>
+              <span className="nic">{item.ic}</span><span>{item.lb}</span>
+            </div>
+        )}
+      </nav>
+      <div className="sbb">
+        <button className="btn bg bfl bsm" onClick={onLogout} style={{color:"var(--txt3)"}}>⎋ تسجيل الخروج</button>
+      </div>
+    </aside>
+  );
+}
+
+/* ===== CLIENTS ===== */
+function ClientsPage({user,showMsg}){
+  const [clients,setC]=useState([]);
+  const [modal,setM]=useState(null);const [sel,setSel]=useState(null);
+  const [form,setF]=useState({name:"",phone:"",address:"",notes:""});
+  const [search,setSch]=useState("");const [jc,setJC]=useState(null);
+
+  useEffect(()=>fbOn(`clients_${user.shopId}`,v=>setC(v?Object.values(v):[])),[]);
+
+  const save=async()=>{
+    if(!form.name.trim()){showMsg("اكتب اسم العميل","error");return;}
+    const id=genId(clients.map(c=>c.id));
+    const cl={id,name:form.name.trim(),phone:form.phone.trim(),address:form.address.trim(),notes:form.notes.trim(),createdAt:today()};
+    await fbSet(`clients_${user.shopId}/${id}`,cl);
+    setJC(cl);setF({name:"",phone:"",address:"",notes:""});setM("created");showMsg("تم تسجيل العميل ✓");
+  };
+  const del=async(id)=>{if(!confirm("هتحذف العميل ده؟"))return;await fbDel(`clients_${user.shopId}/${id}`);showMsg("تم الحذف");};
+  const filt=clients.filter(c=>c.name?.toLowerCase().includes(search.toLowerCase())||c.id?.includes(search.toUpperCase())||c.phone?.includes(search));
+
+  return(
+    <div className="fi">
+      <div className="ph">
+        <div><h1>العملاء</h1><p>{clients.length} عميل مسجل</p></div>
+        <button className="btn ba" onClick={()=>{setF({name:"",phone:"",address:"",notes:""});setM("add");}}>+ عميل جديد</button>
+      </div>
+      <div className="card mb16"><div className="sw"><span className="sic">🔍</span><input className="si2" value={search} onChange={e=>setSch(e.target.value)} placeholder="بحث بالاسم أو ID أو تليفون..."/></div></div>
+      {filt.length===0?<Empty icon="👥" text={search?"مفيش نتايج":"لا يوجد عملاء بعد"}/>:
+        <div style={{display:"flex",flexDirection:"column",gap:8}}>
+          {filt.map(c=>{
+            const ini=c.name.split(" ").map(w=>w[0]).join("").slice(0,2).toUpperCase();
+            return(
+              <div key={c.id} className="cc">
+                <div style={{display:"flex",alignItems:"center",gap:12}}>
+                  <div className="cav">{ini}</div>
+                  <div><div className="fb2" style={{fontSize:14}}>{c.name}</div><div className="tx tm">{c.phone||"بدون رقم"} · {c.address||"بدون عنوان"}</div></div>
+                </div>
+                <div className="fg2">
+                  <span className="bdg ba2 fen">{c.id}</span>
+                  <button className="btn bg bsm" onClick={()=>{setSel(c);setM("view");}}>عرض</button>
+                  <button className="btn bd bsm" onClick={()=>del(c.id)}>حذف</button>
+                </div>
+              </div>
+            );
+          })}
+        </div>}
+      {modal==="add"&&<Modal title="عميل جديد" onClose={()=>setM(null)}>
+        <div className="g2">
+          <div className="fg"><label>الاسم</label><input value={form.name} onChange={e=>setF(f=>({...f,name:e.target.value}))} autoFocus/></div>
+          <div className="fg"><label>التليفون</label><input value={form.phone} onChange={e=>setF(f=>({...f,phone:e.target.value}))}/></div>
+        </div>
+        <div className="fg"><label>العنوان</label><input value={form.address} onChange={e=>setF(f=>({...f,address:e.target.value}))}/></div>
+        <div className="fg"><label>ملاحظات</label><textarea rows={2} value={form.notes} onChange={e=>setF(f=>({...f,notes:e.target.value}))}/></div>
+        <div className="fg2 mt16">
+          <button className="btn ba" style={{flex:1}} onClick={save}>تسجيل وإظهار الـ ID</button>
+          <button className="btn bg" onClick={()=>setM(null)}>إلغاء</button>
+        </div>
+      </Modal>}
+      {modal==="created"&&jc&&<Modal title="" onClose={()=>setM(null)}>
+        <div style={{background:"var(--bg3)",borderRadius:14,padding:28,textAlign:"center",marginBottom:18}}>
+          <div style={{fontSize:11,color:"var(--txt3)",letterSpacing:3,textTransform:"uppercase",marginBottom:8}}>ID العميل</div>
+          <div style={{fontFamily:"var(--fen)",fontSize:52,fontWeight:800,color:"var(--accent)",letterSpacing:8}}>{jc.id}</div>
+          <div style={{color:"var(--txt2)",marginTop:8}}>{jc.name}</div>
+        </div>
+        <button className="btn ba bfl" onClick={()=>setM(null)}>تمام ✓</button>
+      </Modal>}
+      {modal==="view"&&sel&&<Modal title="بيانات العميل" onClose={()=>setM(null)}>
+        <div style={{display:"flex",gap:14,alignItems:"center",marginBottom:18}}>
+          <div className="cav" style={{width:50,height:50,fontSize:18}}>{sel.name.split(" ").map(w=>w[0]).join("").slice(0,2).toUpperCase()}</div>
+          <div><div className="fb2" style={{fontSize:16}}>{sel.name}</div><div className="ts tm">{sel.phone} · {sel.address}</div>{sel.notes&&<div className="tx tm" style={{marginTop:3}}>{sel.notes}</div>}</div>
+          <span className="bdg ba2 fen" style={{marginRight:"auto"}}>{sel.id}</span>
+        </div>
+        <button className="btn bg bfl" onClick={()=>setM(null)}>إغلاق</button>
+      </Modal>}
+    </div>
+  );
+}
+
+/* ===== PRODUCTS ===== */
+function ProductsPage({user,showMsg}){
+  const [prods,setP]=useState([]);
+  const [modal,setM]=useState(null);
+  const [form,setF]=useState({name:"",unit:"",cost:"",sell:"",stock:"",cat:"",eid:null});
+
+  useEffect(()=>fbOn(`products_${user.shopId}`,v=>setP(v?Object.values(v):[])) ,[]);
+
+  const save=async()=>{
+    if(!form.name||!form.sell){showMsg("الاسم والسعر مطلوبان","error");return;}
+    const id=form.eid||"prd_"+Date.now();
+    await fbSet(`products_${user.shopId}/${id}`,{id,name:form.name,unit:form.unit||"قطعة",costPrice:Number(form.cost||0),sellPrice:Number(form.sell),stock:Number(form.stock||0),category:form.cat||"عام"});
+    setM(null);showMsg("تم الحفظ ✓");
+  };
+  const del=async(id)=>{if(!confirm("حذف؟"))return;await fbDel(`products_${user.shopId}/${id}`);showMsg("تم الحذف");};
+
+  return(
+    <div className="fi">
+      <div className="ph">
+        <div><h1>المنتجات والمواد</h1><p>{prods.length} منتج</p></div>
+        <button className="btn ba" onClick={()=>{setF({name:"",unit:"",cost:"",sell:"",stock:"",cat:"",eid:null});setM("form");}}>+ إضافة منتج</button>
+      </div>
+      <div className="card">
+        {prods.length===0?<Empty icon="📦" text="لا يوجد منتجات بعد"/>:(
+          <div className="tw"><table>
+            <thead><tr><th>#</th><th>المنتج</th><th>الفئة</th><th>الوحدة</th><th>التكلفة</th><th>البيع</th><th>المخزون</th><th>إجراءات</th></tr></thead>
+            <tbody>{prods.map((p,i)=>(
+              <tr key={p.id}>
+                <td className="tm">{i+1}</td><td className="fb2">{p.name}</td>
+                <td><span className="bdg bb2">{p.category}</span></td>
+                <td className="tm">{p.unit}</td><td className="tm">{p.costPrice} ج</td>
+                <td><span className="bdg ba2">{p.sellPrice} ج</span></td>
+                <td><span className={`bdg ${p.stock<=0?"br2":p.stock<=5?"bor":"bg2"}`}>{p.stock}</span></td>
+                <td><div className="fg2">
+                  <button className="btn bg bsm" onClick={()=>{setF({name:p.name,unit:p.unit,cost:p.costPrice,sell:p.sellPrice,stock:p.stock,cat:p.category,eid:p.id});setM("form");}}>تعديل</button>
+                  <button className="btn bd bsm" onClick={()=>del(p.id)}>حذف</button>
+                </div></td>
+              </tr>
+            ))}</tbody>
+          </table></div>
+        )}
+      </div>
+      {modal==="form"&&<Modal title={form.eid?"تعديل منتج":"إضافة منتج"} onClose={()=>setM(null)}>
+        <div className="g2">
+          <div className="fg"><label>اسم المنتج / المادة</label><input value={form.name} onChange={e=>setF(f=>({...f,name:e.target.value}))} autoFocus/></div>
+          <div className="fg"><label>الفئة</label><input value={form.cat} onChange={e=>setF(f=>({...f,cat:e.target.value}))} placeholder="دهانات، سيراميك..."/></div>
+        </div>
+        <div className="g3">
+          <div className="fg"><label>الوحدة</label><input value={form.unit} onChange={e=>setF(f=>({...f,unit:e.target.value}))} placeholder="متر، قطعة..."/></div>
+          <div className="fg"><label>سعر التكلفة</label><input type="number" value={form.cost} onChange={e=>setF(f=>({...f,cost:e.target.value}))}/></div>
+          <div className="fg"><label>سعر البيع</label><input type="number" value={form.sell} onChange={e=>setF(f=>({...f,sell:e.target.value}))}/></div>
+        </div>
+        <div className="fg"><label>الكمية في المخزون</label><input type="number" value={form.stock} onChange={e=>setF(f=>({...f,stock:e.target.value}))}/></div>
+        <div className="fg2 mt16"><button className="btn ba" style={{flex:1}} onClick={save}>حفظ</button><button className="btn bg" onClick={()=>setM(null)}>إلغاء</button></div>
+      </Modal>}
+    </div>
+  );
+}
+
+/* ===== PROJECTS ===== */
+function ProjectsPage({user,showMsg}){
+  const [projs,setProj]=useState([]);
+  const [clients,setCl]=useState([]);
+  const [prods,setPr]=useState([]);
+  const [modal,setM]=useState(null);const [sel,setSel]=useState(null);
+  const [form,setF]=useState({cid:"",name:"",desc:"",status:"جاري",budget:"",start:today(),notes:""});
+  const [iForm,setIF]=useState({type:"product",pid:"",cname:"",qty:1,up:"",note:""});
+
+  useEffect(()=>{
+    const u1=fbOn(`projects_${user.shopId}`,v=>setProj(v?Object.values(v):[]));
+    const u2=fbOn(`clients_${user.shopId}`,v=>setCl(v?Object.values(v):[]));
+    const u3=fbOn(`products_${user.shopId}`,v=>setPr(v?Object.values(v):[]));
+    return()=>{u1();u2();u3();};
+  },[]);
+
+  const saveProj=async()=>{
+    if(!form.cid||!form.name){showMsg("اختار العميل واكتب اسم المشروع","error");return;}
+    const id=sel?.id||"prj_"+Date.now();
+    const cl=clients.find(c=>c.id===form.cid);
+    await fbSet(`projects_${user.shopId}/${id}`,{id,clientId:form.cid,clientName:cl?.name||"",name:form.name,description:form.desc,status:form.status,budget:Number(form.budget||0),startDate:form.start,notes:form.notes,items:sel?.items||[],createdAt:sel?.createdAt||today()});
+    setM(null);setSel(null);setF({cid:"",name:"",desc:"",status:"جاري",budget:"",start:today(),notes:""});showMsg("تم حفظ المشروع ✓");
+  };
+
+  const addItem=async()=>{
+    if(!sel) return;
+    const prod=iForm.type==="product"?prods.find(p=>p.id===iForm.pid):null;
+    const name=prod?prod.name:iForm.cname;
+    if(!name){showMsg("اكتب اسم البند","error");return;}
+    const up=Number(iForm.up||prod?.sellPrice||0);
+    const item={id:"item_"+Date.now(),type:iForm.type,name,qty:Number(iForm.qty||1),unitPrice:up,total:Number(iForm.qty||1)*up,note:iForm.note,productId:prod?.id||null};
+    const ui=[...(sel.items||[]),item];
+    await fbUpd(`projects_${user.shopId}/${sel.id}`,{items:ui});
+    setSel(p=>({...p,items:ui}));
+    setIF({type:"product",pid:"",cname:"",qty:1,up:"",note:""});showMsg("تم إضافة البند ✓");
+  };
+
+  const rmItem=async(iid)=>{
+    const ui=(sel.items||[]).filter(i=>i.id!==iid);
+    await fbUpd(`projects_${user.shopId}/${sel.id}`,{items:ui});
+    setSel(p=>({...p,items:ui}));
+  };
+
+  const del=async(id)=>{if(!confirm("حذف المشروع؟"))return;await fbDel(`projects_${user.shopId}/${id}`);showMsg("تم الحذف");};
+  const STS=["جاري","مكتمل","متوقف","قيد المراجعة"];
+  const SC={"جاري":"bb2","مكتمل":"bg2","متوقف":"br2","قيد المراجعة":"bor"};
+
+  return(
+    <div className="fi">
+      <div className="ph">
+        <div><h1>المشاريع</h1><p>{projs.length} مشروع</p></div>
+        <button className="btn ba" onClick={()=>{setSel(null);setF({cid:"",name:"",desc:"",status:"جاري",budget:"",start:today(),notes:""});setM("form");}}>+ مشروع جديد</button>
+      </div>
+      {projs.length===0?<Empty icon="🏗️" text="لا يوجد مشاريع بعد"/>:
+        <div style={{display:"flex",flexDirection:"column",gap:10}}>
+          {projs.slice().reverse().map(p=>{
+            const tot=(p.items||[]).reduce((s,i)=>s+i.total,0);
+            return(
+              <div key={p.id} className="card" style={{display:"flex",justifyContent:"space-between",alignItems:"center",flexWrap:"wrap",gap:10}}>
+                <div>
+                  <div className="fb2" style={{fontSize:14}}>🏗️ {p.name}</div>
+                  <div className="tx tm">{p.clientName} · {p.startDate}</div>
+                  {tot>0&&<div className="tx ta" style={{marginTop:3}}>إجمالي البنود: {tot.toLocaleString()} ج</div>}
+                </div>
+                <div className="fg2">
+                  <span className={`bdg ${SC[p.status]||"bgr"}`}>{p.status}</span>
+                  <button className="btn bg bsm" onClick={()=>{setSel(p);setM("detail");}}>تفاصيل / بنود</button>
+                  <button className="btn bg bsm" onClick={()=>{setSel(p);setF({cid:p.clientId,name:p.name,desc:p.description||"",status:p.status,budget:p.budget||"",start:p.startDate,notes:p.notes||""});setM("form");}}>تعديل</button>
+                  <button className="btn bd bsm" onClick={()=>del(p.id)}>حذف</button>
+                </div>
+              </div>
+            );
+          })}
+        </div>}
+
+      {modal==="form"&&<Modal title={sel?"تعديل المشروع":"مشروع جديد"} onClose={()=>setM(null)}>
+        <div className="fg"><label>العميل</label><select value={form.cid} onChange={e=>setF(f=>({...f,cid:e.target.value}))}><option value="">— اختار عميل —</option>{clients.map(c=><option key={c.id} value={c.id}>#{c.id} — {c.name}</option>)}</select></div>
+        <div className="g2">
+          <div className="fg"><label>اسم المشروع</label><input value={form.name} onChange={e=>setF(f=>({...f,name:e.target.value}))}/></div>
+          <div className="fg"><label>الميزانية التقديرية</label><input type="number" value={form.budget} onChange={e=>setF(f=>({...f,budget:e.target.value}))}/></div>
+        </div>
+        <div className="fg"><label>وصف المشروع</label><textarea rows={2} value={form.desc} onChange={e=>setF(f=>({...f,desc:e.target.value}))}/></div>
+        <div className="g2">
+          <div className="fg"><label>تاريخ البداية</label><input type="date" value={form.start} onChange={e=>setF(f=>({...f,start:e.target.value}))}/></div>
+          <div className="fg"><label>الحالة</label><div className="chips">{STS.map(s=><div key={s} className={`chip ${form.status===s?"act":""}`} onClick={()=>setF(f=>({...f,status:s}))}>{s}</div>)}</div></div>
+        </div>
+        <div className="fg"><label>ملاحظات</label><textarea rows={2} value={form.notes} onChange={e=>setF(f=>({...f,notes:e.target.value}))}/></div>
+        <div className="fg2 mt16"><button className="btn ba" style={{flex:1}} onClick={saveProj}>حفظ</button><button className="btn bg" onClick={()=>setM(null)}>إلغاء</button></div>
+      </Modal>}
+
+      {modal==="detail"&&sel&&<Modal title={`🏗️ ${sel.name}`} onClose={()=>setM(null)}>
+        <div style={{background:"var(--bg3)",borderRadius:10,padding:"11px 14px",marginBottom:14,fontSize:13}}>
+          <div className="fb"><span>العميل: <strong>{sel.clientName}</strong></span><span className={`bdg ${SC[sel.status]||"bgr"}`}>{sel.status}</span></div>
+          {sel.description&&<div style={{marginTop:5,color:"var(--txt3)"}}>{sel.description}</div>}
+        </div>
+        <div className="ct" style={{marginBottom:10}}>📋 بنود المشروع</div>
+        {(sel.items||[]).length===0
+          ?<div className="ts tm" style={{textAlign:"center",padding:"12px 0"}}>لا يوجد بنود بعد</div>
+          :<div className="tw" style={{marginBottom:14}}><table>
+            <thead><tr><th>البند</th><th>الكمية</th><th>السعر</th><th>الإجمالي</th><th></th></tr></thead>
+            <tbody>
+              {(sel.items||[]).map(it=>(
+                <tr key={it.id}><td><div className="fb2">{it.name}</div>{it.note&&<div className="tx tm">{it.note}</div>}</td><td>{it.qty}</td><td>{it.unitPrice?.toLocaleString()} ج</td><td><span className="bdg ba2">{it.total?.toLocaleString()} ج</span></td><td><button className="btn bd bsm" onClick={()=>rmItem(it.id)}>✕</button></td></tr>
+              ))}
+              <tr><td colSpan={3} style={{textAlign:"left",fontWeight:700,color:"var(--accent)"}}>الإجمالي</td><td><span className="bdg ba2 fen">{(sel.items||[]).reduce((s,i)=>s+i.total,0).toLocaleString()} ج</span></td><td></td></tr>
+            </tbody>
+          </table></div>}
+        <div className="dv"/>
+        <div className="ct" style={{marginBottom:10,fontSize:13}}>➕ إضافة بند</div>
+        <div className="chips" style={{marginBottom:10}}>
+          <div className={`chip ${iForm.type==="product"?"act":""}`} onClick={()=>setIF(f=>({...f,type:"product",cname:""}))}>📦 من المنتجات</div>
+          <div className={`chip ${iForm.type==="labor"?"act":""}`} onClick={()=>setIF(f=>({...f,type:"labor",pid:""}))}>🔧 عمالة</div>
+          <div className={`chip ${iForm.type==="custom"?"act":""}`} onClick={()=>setIF(f=>({...f,type:"custom",pid:""}))}>📝 يدوي</div>
+        </div>
+        {iForm.type==="product"&&<div className="fg"><label>المنتج</label><select value={iForm.pid} onChange={e=>{const p=prods.find(x=>x.id===e.target.value);setIF(f=>({...f,pid:e.target.value,up:p?.sellPrice||""}));}}><option value="">— اختار منتج —</option>{prods.map(p=><option key={p.id} value={p.id}>{p.name} — {p.sellPrice} ج</option>)}</select></div>}
+        {(iForm.type==="labor"||iForm.type==="custom")&&<div className="fg"><label>اسم البند</label><input value={iForm.cname} onChange={e=>setIF(f=>({...f,cname:e.target.value}))} placeholder="تركيب سيراميك، دهان أسقف..."/></div>}
+        <div className="g3">
+          <div className="fg"><label>الكمية</label><input type="number" value={iForm.qty} onChange={e=>setIF(f=>({...f,qty:e.target.value}))}/></div>
+          <div className="fg"><label>سعر الوحدة</label><input type="number" value={iForm.up} onChange={e=>setIF(f=>({...f,up:e.target.value}))}/></div>
+          <div className="fg"><label>ملاحظة</label><input value={iForm.note} onChange={e=>setIF(f=>({...f,note:e.target.value}))}/></div>
+        </div>
+        {iForm.up&&iForm.qty&&<div style={{background:"var(--bg3)",borderRadius:8,padding:"9px 13px",fontSize:13,marginBottom:10}}>الإجمالي: <strong className="ta">{(Number(iForm.qty)*Number(iForm.up)).toLocaleString()} ج</strong></div>}
+        <button className="btn ba bfl" onClick={addItem}>إضافة البند ✓</button>
+      </Modal>}
+    </div>
+  );
+}
+
+/* ===== INVOICES ===== */
+function InvoicesPage({user,showMsg}){
+  const [invs,setI]=useState([]);const [clients,setCl]=useState([]);const [projs,setPj]=useState([]);const [prods,setPr]=useState([]);
+  const [modal,setM]=useState(null);const [sel,setSel]=useState(null);
+  const [form,setF]=useState({cid:"",pjid:"",notes:"",disc:0,pm:"cash",ps:"paid"});
+  const [ex,setEx]=useState([]);const [exF,setExF]=useState({name:"",qty:1,up:"",note:""});
+  const printRef=useRef();
+
+  useEffect(()=>{
+    const u1=fbOn(`invoices_${user.shopId}`,v=>setI(v?Object.values(v):[]));
+    const u2=fbOn(`clients_${user.shopId}`,v=>setCl(v?Object.values(v):[]));
+    const u3=fbOn(`projects_${user.shopId}`,v=>setPj(v?Object.values(v):[]));
+    const u4=fbOn(`products_${user.shopId}`,v=>setPr(v?Object.values(v):[]));
+    return()=>{u1();u2();u3();u4();};
+  },[]);
+
+  const selP=projs.find(p=>p.id===form.pjid);
+  const allIt=[...(selP?.items||[]),...ex];
+  const sub=allIt.reduce((s,i)=>s+i.total,0);
+  const disc=Number(form.disc||0);
+  const tot=sub-disc;
+
+  const addEx=()=>{
+    if(!exF.name||!exF.up){showMsg("اكتب الاسم والسعر","error");return;}
+    setEx(x=>[...x,{id:"ext_"+Date.now(),name:exF.name,qty:Number(exF.qty),unitPrice:Number(exF.up),total:Number(exF.qty)*Number(exF.up),note:exF.note}]);
+    setExF({name:"",qty:1,up:"",note:""});
+  };
+
+  const saveInv=async()=>{
+    if(!form.cid){showMsg("اختار العميل","error");return;}
+    const cl=clients.find(c=>c.id===form.cid);
+    const id="inv_"+Date.now();
+    const inv={id,invoiceNo:"INV-"+Date.now().toString().slice(-6),clientId:form.cid,clientName:cl?.name||"",clientPhone:cl?.phone||"",clientAddress:cl?.address||"",projectId:form.pjid||null,projectName:selP?.name||"",items:allIt,subtotal:sub,discount:disc,total:tot,paymentMethod:form.pm,payStatus:form.ps,notes:form.notes,date:today()};
+    await fbSet(`invoices_${user.shopId}/${id}`,inv);
+    if(form.ps==="paid") await fbSet(`sessions_${user.shopId}/sess_${Date.now()}`,{id:"sess_"+Date.now(),date:today(),time:getTime(),serviceNames:`فاتورة — ${cl?.name}`,amount:tot,paymentMethod:form.pm,clientId:form.cid,clientName:cl?.name,invoiceId:id});
+    setM(null);setF({cid:"",pjid:"",notes:"",disc:0,pm:"cash",ps:"paid"});setEx([]);showMsg("تم إنشاء الفاتورة ✓");
+  };
+
+  const doPrint=()=>{
+    const c=printRef.current?.innerHTML;if(!c)return;
+    const w=window.open("","_blank");
+    w.document.write(`<html><head><title>فاتورة</title><style>body{font-family:'Noto Sans Arabic',sans-serif;direction:rtl;margin:20px;}table{width:100%;border-collapse:collapse;}th,td{padding:8px 12px;border:1px solid #eee;text-align:right;}th{background:#f5f5f5;font-size:12px;font-weight:700;}.logo{font-size:26px;font-weight:800;color:#f5a623;font-family:sans-serif;}</style></head><body>${c}</body></html>`);
+    w.document.close();w.print();
+  };
+
+  const SC={paid:"bg2",pending:"bor",partial:"bb2"};const SL={paid:"مدفوع",pending:"معلق",partial:"جزئي"};
+
+  return(
+    <div className="fi">
+      <div className="ph">
+        <div><h1>الفواتير</h1><p>{invs.length} فاتورة</p></div>
+        <button className="btn ba" onClick={()=>{setSel(null);setEx([]);setF({cid:"",pjid:"",notes:"",disc:0,pm:"cash",ps:"paid"});setM("form");}}>+ فاتورة جديدة</button>
+      </div>
+      <div className="card">
+        {invs.length===0?<Empty icon="🧾" text="لا يوجد فواتير بعد"/>:(
+          <div className="tw"><table>
+            <thead><tr><th>رقم الفاتورة</th><th>العميل</th><th>المشروع</th><th>الإجمالي</th><th>التاريخ</th><th>الحالة</th><th>إجراءات</th></tr></thead>
+            <tbody>{invs.slice().reverse().map(inv=>(
+              <tr key={inv.id}>
+                <td><span className="bdg ba2 fen">{inv.invoiceNo}</span></td>
+                <td className="fb2">{inv.clientName}</td>
+                <td className="tm ts">{inv.projectName||"—"}</td>
+                <td><span className="bdg bg2">{inv.total?.toLocaleString()} ج</span></td>
+                <td className="tm ts">{inv.date}</td>
+                <td><span className={`bdg ${SC[inv.payStatus]||"bgr"}`}>{SL[inv.payStatus]||inv.payStatus}</span></td>
+                <td><button className="btn bg bsm" onClick={()=>{setSel(inv);setM("view");}}>عرض / طباعة</button></td>
+              </tr>
+            ))}</tbody>
+          </table></div>
+        )}
+      </div>
+
+      {modal==="form"&&<Modal title="فاتورة جديدة" onClose={()=>setM(null)}>
+        <div className="fg"><label>العميل</label><select value={form.cid} onChange={e=>setF(f=>({...f,cid:e.target.value,pjid:""}))}><option value="">— اختار عميل —</option>{clients.map(c=><option key={c.id} value={c.id}>#{c.id} — {c.name}</option>)}</select></div>
+        {form.cid&&<div className="fg"><label>المشروع (اختياري)</label><select value={form.pjid} onChange={e=>setF(f=>({...f,pjid:e.target.value}))}><option value="">— بدون مشروع —</option>{projs.filter(p=>p.clientId===form.cid).map(p=><option key={p.id} value={p.id}>{p.name}</option>)}</select></div>}
+        {allIt.length>0&&<div style={{background:"var(--bg3)",borderRadius:10,padding:"11px 14px",marginBottom:12,fontSize:13}}>
+          <div className="fb2" style={{marginBottom:7}}>البنود ({allIt.length})</div>
+          {allIt.map((it,i)=><div key={i} style={{display:"flex",justifyContent:"space-between",padding:"4px 0",borderBottom:"1px solid var(--brd)"}}><span>{it.name} <span className="tm">× {it.qty}</span></span><span className="ta">{it.total?.toLocaleString()} ج</span></div>)}
+          <div style={{display:"flex",justifyContent:"space-between",fontWeight:700,marginTop:7,color:"var(--accent)"}}><span>الإجمالي</span><span>{sub.toLocaleString()} ج</span></div>
+        </div>}
+        <div style={{fontSize:13,fontWeight:700,marginBottom:8}}>➕ بند إضافي</div>
+        <div className="g3">
+          <div className="fg"><label>الاسم</label><input value={exF.name} onChange={e=>setExF(f=>({...f,name:e.target.value}))}/></div>
+          <div className="fg"><label>الكمية</label><input type="number" value={exF.qty} onChange={e=>setExF(f=>({...f,qty:e.target.value}))}/></div>
+          <div className="fg"><label>السعر</label><input type="number" value={exF.up} onChange={e=>setExF(f=>({...f,up:e.target.value}))}/></div>
+        </div>
+        <button className="btn bg bsm" style={{marginBottom:12}} onClick={addEx}>+ إضافة البند</button>
+        <div className="g2">
+          <div className="fg"><label>خصم (ج)</label><input type="number" value={form.disc} onChange={e=>setF(f=>({...f,disc:e.target.value}))}/></div>
+          <div className="fg"><label>حالة الدفع</label><div className="chips">{[["paid","مدفوع"],["pending","معلق"],["partial","جزئي"]].map(([id,lb])=><div key={id} className={`chip ${form.ps===id?"act":""}`} onClick={()=>setF(f=>({...f,ps:id}))}>{lb}</div>)}</div></div>
+        </div>
+        <div className="fg"><label>طريقة الدفع</label><div className="pcs">{PMS.map(pm=><div key={pm.id} className={`pc ${form.pm===pm.id?"act":""}`} onClick={()=>setF(f=>({...f,pm:pm.id}))}>{pm.icon} {pm.label}</div>)}</div></div>
+        <div className="fg"><label>ملاحظات</label><textarea rows={2} value={form.notes} onChange={e=>setF(f=>({...f,notes:e.target.value}))}/></div>
+        {tot>0&&<div style={{background:"var(--bg3)",borderRadius:10,padding:"13px 16px",marginBottom:12,display:"flex",justifyContent:"space-between",alignItems:"center"}}><span className="tm ts">الإجمالي النهائي {disc>0?`(بعد خصم ${disc} ج)`:""}</span><span style={{fontFamily:"var(--fen)",fontSize:20,fontWeight:800,color:"var(--accent)"}}>{tot.toLocaleString()} ج</span></div>}
+        <div className="fg2 mt16"><button className="btn ba" style={{flex:1}} onClick={saveInv}>إنشاء الفاتورة 🧾</button><button className="btn bg" onClick={()=>setM(null)}>إلغاء</button></div>
+      </Modal>}
+
+      {modal==="view"&&sel&&<Modal title="" onClose={()=>setM(null)}>
+        <div className="fg2" style={{marginBottom:14}}>
+          <button className="btn ba" style={{flex:1}} onClick={doPrint}>🖨️ طباعة / PDF</button>
+          <button className="btn bg" onClick={()=>setM(null)}>إغلاق</button>
+        </div>
+        <div ref={printRef}>
+          <div className="inv">
+            <div style={{display:"flex",justifyContent:"space-between",marginBottom:24,paddingBottom:16,borderBottom:"2px solid #eee"}}>
+              <div><div className="invl">BuildOS</div><div style={{fontSize:11,color:"#999",marginTop:3}}>نظام إدارة التشطيبات والمقاولات</div></div>
+              <div style={{textAlign:"left"}}><div style={{fontSize:20,fontWeight:700,color:"#333"}}>فاتورة</div><div style={{fontSize:12,color:"#666",marginTop:3}}>{sel.invoiceNo}</div><div style={{fontSize:12,color:"#666"}}>{sel.date}</div></div>
+            </div>
+            <div style={{display:"flex",justifyContent:"space-between",marginBottom:20,fontSize:13}}>
+              <div><div style={{fontWeight:700,marginBottom:4}}>العميل</div><div>{sel.clientName}</div><div style={{color:"#666"}}>{sel.clientPhone}</div><div style={{color:"#666"}}>{sel.clientAddress}</div></div>
+              {sel.projectName&&<div><div style={{fontWeight:700,marginBottom:4}}>المشروع</div><div>{sel.projectName}</div></div>}
+            </div>
+            <table className="invt" style={{marginBottom:14}}>
+              <thead><tr><th>#</th><th>البند / الخدمة</th><th>الكمية</th><th>سعر الوحدة</th><th>الإجمالي</th></tr></thead>
+              <tbody>
+                {(sel.items||[]).map((it,i)=>(
+                  <tr key={i}><td>{i+1}</td><td><div style={{fontWeight:600}}>{it.name}</div>{it.note&&<div style={{fontSize:11,color:"#999"}}>{it.note}</div>}</td><td>{it.qty}</td><td>{it.unitPrice?.toLocaleString()} ج</td><td style={{fontWeight:700}}>{it.total?.toLocaleString()} ج</td></tr>
+                ))}
+                {sel.discount>0&&<tr><td colSpan={4} style={{textAlign:"left",color:"#e67e22",fontWeight:700}}>خصم</td><td style={{color:"#e67e22",fontWeight:700}}>- {sel.discount?.toLocaleString()} ج</td></tr>}
+                <tr style={{background:"#fef9ef"}}><td colSpan={4} style={{textAlign:"left",fontWeight:700,fontSize:15}}>الإجمالي النهائي</td><td style={{fontSize:17,color:"#f5a623",fontWeight:800}}>{sel.total?.toLocaleString()} ج</td></tr>
+              </tbody>
+            </table>
+            <div style={{display:"flex",justifyContent:"space-between",fontSize:12,color:"#666",marginBottom:8}}>
+              <span>طريقة الدفع: {PMS.find(p=>p.id===sel.paymentMethod)?.label||sel.paymentMethod}</span>
+              <span>الحالة: {SL[sel.payStatus]||sel.payStatus}</span>
+            </div>
+            {sel.notes&&<div style={{background:"#fff9f0",borderRadius:8,padding:"9px 13px",fontSize:12,color:"#666"}}>ملاحظات: {sel.notes}</div>}
+            <div style={{marginTop:20,paddingTop:12,borderTop:"1px solid #eee",fontSize:11,color:"#999",textAlign:"center"}}>BuildOS — نظام إدارة التشطيبات والمقاولات | شكراً لتعاملكم معنا</div>
+          </div>
+        </div>
+      </Modal>}
+    </div>
+  );
+}
+
+/* ===== EMPLOYEES ===== */
+function EmpPage({user,showMsg}){
+  const [staff,setS]=useState([]);const [modal,setM]=useState(false);const [eu,setEU]=useState(null);
+  const [form,setF]=useState({name:"",uname:"",pass:"",role:"employee",phone:"",salary:""});
+
+  useEffect(()=>fbOn("users",v=>{if(v)setS(Object.values(v).filter(u=>(u.role==="employee"||u.role==="manager")&&u.shopId===user.shopId));}),[]);
+
+  const save=async()=>{
+    if(!form.name||!form.uname){showMsg("ملء كل الحقول مطلوب","error");return;}
+    if(eu){
+      const upd={name:form.name,username:form.uname,role:form.role,phone:form.phone,salary:Number(form.salary||0)};
+      if(form.pass)upd.password=form.pass;
+      await fbUpd(`users/${eu.id}`,upd);showMsg("تم التعديل ✓");
+    }else{
+      if(!form.pass){showMsg("كلمة المرور مطلوبة","error");return;}
+      const users=await fbGet("users");
+      if(users&&Object.values(users).find(u=>u.username===form.uname)){showMsg("اسم المستخدم موجود","error");return;}
+      const id="emp_"+Date.now();
+      await fbSet(`users/${id}`,{id,username:form.uname,password:form.pass,role:form.role,name:form.name,phone:form.phone,salary:Number(form.salary||0),shopId:user.shopId,active:true,joinDate:today()});
+      showMsg("تم الإضافة ✓");
     }
-  }
+    setM(false);setEU(null);setF({name:"",uname:"",pass:"",role:"employee",phone:"",salary:""});
+  };
+  const tog=async(id,cur)=>{await fbUpd(`users/${id}`,{active:!cur});showMsg(!cur?"تم التفعيل ✓":"تم التعطيل");};
 
-  // Save to Firebase
-  const leadId='lead_'+Date.now();
-  const now=new Date();
-  const dateStr=now.toISOString().slice(0,10);
-  const timeStr=now.toTimeString().slice(0,5);
-
-  await db.ref(`leads_${SHOP_ID}/${leadId}`).set({
-    id:leadId,
-    name,phone,service,
-    area:area?Number(area):null,
-    location,message,
-    photos:photoURLs,
-    status:'new',
-    source:'website',
-    date:dateStr,
-    time:timeStr,
-    createdAt:Date.now()
-  });
-
-  // UI success
-  btn.style.display='none';
-  document.getElementById('successMsg').style.display='block';
+  return(
+    <div className="fi">
+      <div className="ph">
+        <div><h1>الموظفين</h1><p>{staff.length} موظف</p></div>
+        <button className="btn ba" onClick={()=>{setEU(null);setF({name:"",uname:"",pass:"",role:"employee",phone:"",salary:""});setM(true);}}>+ إضافة موظف</button>
+      </div>
+      <div className="card">
+        {staff.length===0?<Empty icon="👤" text="لا يوجد موظفين"/>:(
+          <div className="tw"><table>
+            <thead><tr><th>الاسم</th><th>الدور</th><th>اسم المستخدم</th><th>التليفون</th><th>الراتب</th><th>الحالة</th><th>إجراءات</th></tr></thead>
+            <tbody>{staff.map(e=>{
+              const act=e.active!==false;
+              return(
+                <tr key={e.id}>
+                  <td className="fb2">{e.name}</td>
+                  <td><span className={`bdg ${e.role==="manager"?"bpu":"bb2"}`}>{e.role==="manager"?"مدير":"موظف"}</span></td>
+                  <td className="tm">{e.username}</td>
+                  <td className="tm">{e.phone||"—"}</td>
+                  <td>{e.salary?<span className="bdg ba2">{e.salary?.toLocaleString()} ج</span>:"—"}</td>
+                  <td><span className={`bdg ${act?"bg2":"br2"}`}>{act?"نشط":"موقوف"}</span></td>
+                  <td><div className="fg2">
+                    <button className="btn bg bsm" onClick={()=>{setEU(e);setF({name:e.name,uname:e.username,pass:"",role:e.role,phone:e.phone||"",salary:e.salary||""});setM(true);}}>تعديل</button>
+                    <button className={`btn bsm ${act?"bw":"bs"}`} onClick={()=>tog(e.id,act)}>{act?"تعطيل":"تفعيل"}</button>
+                  </div></td>
+                </tr>
+              );
+            })}</tbody>
+          </table></div>
+        )}
+      </div>
+      {modal&&<Modal title={eu?"تعديل موظف":"إضافة موظف"} onClose={()=>{setM(false);setEU(null);}}>
+        <div className="g2">
+          <div className="fg"><label>الاسم الكامل</label><input value={form.name} onChange={e=>setF(f=>({...f,name:e.target.value}))}/></div>
+          <div className="fg"><label>التليفون</label><input value={form.phone} onChange={e=>setF(f=>({...f,phone:e.target.value}))}/></div>
+        </div>
+        <div className="fg"><label>الدور</label><div className="chips"><div className={`chip ${form.role==="employee"?"act":""}`} onClick={()=>setF(f=>({...f,role:"employee"}))}>👷 موظف</div><div className={`chip ${form.role==="manager"?"act":""}`} onClick={()=>setF(f=>({...f,role:"manager"}))}>📋 مدير</div></div></div>
+        <div className="g2">
+          <div className="fg"><label>اسم المستخدم</label><input value={form.uname} onChange={e=>setF(f=>({...f,uname:e.target.value}))}/></div>
+          <div className="fg"><label>كلمة المرور {eu&&"(فارغة = بدون تغيير)"}</label><input type="password" value={form.pass} onChange={e=>setF(f=>({...f,pass:e.target.value}))}/></div>
+        </div>
+        <div className="fg"><label>الراتب الشهري (ج)</label><input type="number" value={form.salary} onChange={e=>setF(f=>({...f,salary:e.target.value}))}/></div>
+        <div className="fg2 mt16"><button className="btn ba" style={{flex:1}} onClick={save}>حفظ</button><button className="btn bg" onClick={()=>{setM(false);setEU(null);}}>إلغاء</button></div>
+      </Modal>}
+    </div>
+  );
 }
+
+/* ===== ATTENDANCE ===== */
+function AttPage({user,showMsg}){
+  const [staff,setS]=useState([]);const [att,setAtt]=useState({});
+  const [filter,setF]=useState("daily");const [vdate,setVD]=useState(today());const [range,setR]=useState("week");
+
+  useEffect(()=>{
+    const u1=fbOn("users",v=>{if(v)setS(Object.values(v).filter(u2=>u2.shopId===user.shopId&&(u2.role==="employee"||u2.role==="manager")));});
+    const u2=fbOn(`attendance_${user.shopId}`,v=>setAtt(v||{}));
+    return()=>{u1();u2();};
+  },[]);
+
+  const setSt=async(eid,date,status)=>{
+    await fbSet(`attendance_${user.shopId}/${date}_${eid}`,{empId:eid,date,status,by:user.id,at:getTime()});
+    showMsg("تم التسجيل ✓");
+  };
+  const getSt=(eid,date)=>att[`${date}_${eid}`]?.status||null;
+
+  const getDR=(r)=>{
+    const dates=[];const end=getNow();let start=new Date(getNow());
+    if(r==="week")start.setDate(start.getDate()-6);
+    else if(r==="two_weeks")start.setDate(start.getDate()-13);
+    else start.setDate(start.getDate()-29);
+    for(let d=new Date(start);d<=end;d.setDate(d.getDate()+1))dates.push(d.toISOString().slice(0,10));
+    return dates;
+  };
+
+  const rd=getDR(range);
+  const getStats=(eid,dates)=>{
+    const s={present:0,absent:0,late:0,leave:0,total:dates.length};
+    dates.forEach(d=>{const st=getSt(eid,d);if(st)s[st]=(s[st]||0)+1;});
+    s.unrecorded=s.total-(s.present+s.absent+s.late+s.leave);return s;
+  };
+
+  const AC={present:"#10b981",absent:"#ef4444",late:"#f59e0b",leave:"#6366f1"};
+  const AL={present:"حاضر",absent:"غائب",late:"متأخر",leave:"إجازة"};
+
+  return(
+    <div className="fi">
+      <div className="ph">
+        <div><h1>الحضور والغياب</h1></div>
+        <div className="chips">{[["daily","📅 يومي"],["report","📊 تقرير"]].map(([id,lb])=><div key={id} className={`chip ${filter===id?"act":""}`} onClick={()=>setF(id)}>{lb}</div>)}</div>
+      </div>
+
+      {filter==="daily"&&<>
+        <div className="card mb16">
+          <div className="fb">
+            <div className="ct" style={{marginBottom:0}}>تسجيل يوم</div>
+            <input type="date" value={vdate} onChange={e=>setVD(e.target.value)} style={{background:"var(--bg3)",border:"1px solid var(--brd)",borderRadius:8,padding:"7px 12px",color:"var(--txt)",fontFamily:"var(--far)",fontSize:13}}/>
+          </div>
+        </div>
+        {staff.length===0?<Empty icon="👤" text="لا يوجد موظفين"/>:(
+          <div className="ag">
+            {staff.map(e=>{
+              const st=getSt(e.id,vdate);
+              return(
+                <div key={e.id} className="ac">
+                  <div className="an">{e.name}</div>
+                  {st&&<div style={{marginBottom:5}}><span className="bdg" style={{background:AC[st]+"22",color:AC[st]}}>{AL[st]}</span></div>}
+                  <div style={{display:"flex",gap:5,flexWrap:"wrap"}}>
+                    {ATTS.map(s=>(
+                      <button key={s.id} className="ab2" style={st===s.id?{background:s.color,color:"white",border:"none"}:{}}
+                        onClick={()=>setSt(e.id,vdate,s.id)}>{s.label}</button>
+                    ))}
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+        )}
+      </>}
+
+      {filter==="report"&&<>
+        <div className="card mb16">
+          <div className="fb">
+            <div className="ct" style={{marginBottom:0}}>فترة التقرير</div>
+            <div className="chips">{[["week","أسبوع"],["two_weeks","أسبوعين"],["month","شهر"]].map(([id,lb])=><div key={id} className={`chip ${range===id?"act":""}`} onClick={()=>setR(id)}>{lb}</div>)}</div>
+          </div>
+        </div>
+        {staff.length===0?<Empty icon="👤" text="لا يوجد موظفين"/>:(
+          <div style={{display:"flex",flexDirection:"column",gap:10}}>
+            {staff.map(e=>{
+              const st=getStats(e.id,rd);
+              const pct=st.total>0?Math.round((st.present/st.total)*100):0;
+              const pc=pct>=80?"var(--green)":pct>=60?"var(--orange)":"var(--red)";
+              return(
+                <div key={e.id} className="card">
+                  <div className="fb" style={{marginBottom:10}}>
+                    <div><div className="fb2">{e.name}</div><div className="tx tm">{rd.length} يوم</div></div>
+                    <div style={{textAlign:"center"}}><div style={{fontFamily:"var(--fen)",fontSize:26,fontWeight:800,color:pc}}>{pct}%</div><div className="tx tm">نسبة الحضور</div></div>
+                  </div>
+                  <div style={{display:"flex",gap:8,flexWrap:"wrap",marginBottom:10}}>
+                    {Object.entries({present:"حاضر",late:"متأخر",absent:"غائب",leave:"إجازة"}).map(([k,lb])=>(
+                      <div key={k} style={{background:"var(--bg3)",borderRadius:8,padding:"7px 12px",textAlign:"center",flex:"1 1 60px"}}>
+                        <div style={{fontFamily:"var(--fen)",fontSize:18,fontWeight:800,color:AC[k]}}>{st[k]||0}</div>
+                        <div className="tx tm">{lb}</div>
+                      </div>
+                    ))}
+                  </div>
+                  <div style={{height:7,background:"var(--bg3)",borderRadius:4,overflow:"hidden"}}>
+                    <div style={{height:"100%",width:`${pct}%`,background:pc,borderRadius:4}}/>
+                  </div>
+                </div>
+              );
+            })}
+            <div className="card" style={{borderColor:"var(--accent)",borderWidth:2}}>
+              <div className="ct">📊 ملخص الفريق — {rd.length} يوم</div>
+              <div className="sg">
+                {staff.map(e=>{
+                  const st=getStats(e.id,rd);
+                  return(
+                    <div key={e.id} style={{background:"var(--bg3)",borderRadius:10,padding:"10px 14px"}}>
+                      <div className="ts fb2">{e.name}</div>
+                      <div style={{fontFamily:"var(--fen)",fontSize:20,fontWeight:800,color:"var(--accent)",marginTop:3}}>{st.present}<span style={{fontSize:12,color:"var(--txt3)"}}>/{st.total}</span></div>
+                      <div className="tx tm">يوم حضور</div>
+                    </div>
+                  );
+                })}
+              </div>
+            </div>
+          </div>
+        )}
+      </>}
+    </div>
+  );
+}
+
+/* ===== REVENUE ===== */
+function RevPage({user}){
+  const [sess,setSess]=useState([]);const [invs,setI]=useState([]);
+  useEffect(()=>{
+    const u1=fbOn(`sessions_${user.shopId}`,v=>setSess(v?Object.values(v):[]));
+    const u2=fbOn(`invoices_${user.shopId}`,v=>setI(v?Object.values(v):[]));
+    return()=>{u1();u2();};
+  },[]);
+  const ms=sess.filter(s=>s.date?.startsWith(thisMonth()));
+  const mr=ms.reduce((s,x)=>s+(x.amount||0),0);
+  const pt=invs.filter(i=>i.payStatus!=="paid").reduce((s,i)=>s+(i.total||0),0);
+  const days=Array.from({length:7},(_,i)=>{const d=getNow();d.setDate(d.getDate()-(6-i));return d.toISOString().slice(0,10);});
+  const dr=days.map(d=>({lb:new Date(d).toLocaleDateString("ar-EG",{weekday:"short"}),v:sess.filter(s=>s.date===d).reduce((s2,s)=>s2+(s.amount||0),0)}));
+  const mx=Math.max(...dr.map(d=>d.v),1);
+  const bm=PMS.map(pm=>({...pm,tot:ms.filter(s=>s.paymentMethod===pm.id).reduce((s,x)=>s+x.amount,0)})).filter(p=>p.tot>0);
+  return(
+    <div className="fi">
+      <div className="ph"><h1>الإيرادات</h1><p>{thisMonth()}</p></div>
+      <div className="sg">
+        <StatCard icon="💰" val={mr.toLocaleString()+" ج"} lbl="إيراد الشهر" cls="sa"/>
+        <StatCard icon="🧾" val={invs.filter(i=>i.payStatus==="paid").length} lbl="فاتورة مدفوعة" cls="sg2"/>
+        <StatCard icon="⏳" val={pt.toLocaleString()+" ج"} lbl="فواتير معلقة" cls="sr"/>
+        <StatCard icon="📊" val={ms.length} lbl="معاملة الشهر" cls="sb2"/>
+      </div>
+      <div className="card mb16">
+        <div className="ct">📈 آخر 7 أيام</div>
+        <div className="bc">
+          {dr.map((d,i)=>(
+            <div key={i} className="bcl">
+              <div style={{flex:1,display:"flex",alignItems:"flex-end",width:"100%"}}>
+                <div className="bcf" style={{height:`${(d.v/mx)*100}%`,opacity:i===6?1:.6}}/>
+              </div>
+              <span className="bclb">{d.lb}</span>
+              {d.v>0&&<span className="bclb" style={{color:"var(--accent)"}}>{d.v}</span>}
+            </div>
+          ))}
+        </div>
+      </div>
+      {bm.length>0&&<div className="card"><div className="ct">💳 حسب طريقة الدفع</div>
+        <div style={{display:"flex",gap:10,flexWrap:"wrap"}}>
+          {bm.map(pm=><div key={pm.id} className="sc sa" style={{flex:"1 1 120px"}}><span className="si">{pm.icon}</span><div><div className="sv">{pm.tot.toLocaleString()} ج</div><div className="sl">{pm.label}</div></div></div>)}
+        </div>
+      </div>}
+    </div>
+  );
+}
+
+/* ===== SHOPS ===== */
+function ShopsPage({showMsg}){
+  const [shops,setSh]=useState([]);
+  useEffect(()=>fbOn("shops",v=>setSh(v?Object.values(v):[])) ,[]);
+  const tog=async(id,cur)=>{await fbUpd(`shops/${id}`,{active:!cur});showMsg("تم التحديث ✓");};
+  return(
+    <div className="fi">
+      <div className="ph"><h1>الشركات</h1><p>{shops.length} شركة</p></div>
+      <div className="card">
+        {shops.length===0?<Empty icon="🏢" text="لا يوجد شركات"/>:(
+          <div className="tw"><table>
+            <thead><tr><th>الشركة</th><th>صاحب الشركة</th><th>تاريخ التسجيل</th><th>الحالة</th><th>إجراءات</th></tr></thead>
+            <tbody>{shops.map(s=>(
+              <tr key={s.id}><td className="fb2">🏢 {s.name}</td><td>{s.ownerName}</td><td className="tm ts">{s.createdAt}</td>
+              <td><span className={`bdg ${s.active?"bg2":"br2"}`}>{s.active?"نشط":"موقوف"}</span></td>
+              <td><button className={`btn bsm ${s.active?"bd":"bs"}`} onClick={()=>tog(s.id,s.active)}>{s.active?"إيقاف":"تفعيل"}</button></td></tr>
+            ))}</tbody>
+          </table></div>
+        )}
+      </div>
+    </div>
+  );
+}
+
+/* ===== USERS ===== */
+function UsersPage({showMsg}){
+  const [users,setU]=useState([]);const [shops,setSh]=useState([]);const [sch,setSch]=useState("");const [sp,setSP]=useState({});
+  useEffect(()=>{
+    const u1=fbOn("users",v=>setU(v?Object.values(v):[]));
+    const u2=fbOn("shops",v=>setSh(v?Object.values(v):[]));
+    return()=>{u1();u2();};
+  },[]);
+  const tog=async(u)=>{if(u.role==="superadmin"){showMsg("لا يمكن تعطيل Super Admin","error");return;}await fbUpd(`users/${u.id}`,{active:!(u.active!==false)});showMsg("تم التحديث ✓");};
+  const filt=users.filter(u=>u.name?.toLowerCase().includes(sch.toLowerCase())||u.username?.toLowerCase().includes(sch.toLowerCase()));
+  const RL={superadmin:"Super Admin",owner:"صاحب شركة",manager:"مدير",employee:"موظف"};
+  return(
+    <div className="fi">
+      <div className="ph"><h1>المستخدمين</h1><p>{users.length} مستخدم</p></div>
+      <div className="card mb16"><div className="sw"><span className="sic">🔍</span><input className="si2" value={sch} onChange={e=>setSch(e.target.value)} placeholder="بحث..."/></div></div>
+      <div className="card"><div className="tw"><table>
+        <thead><tr><th>الاسم</th><th>الدور</th><th>اسم المستخدم</th><th>كلمة المرور</th><th>الشركة</th><th>الحالة</th><th>إجراء</th></tr></thead>
+        <tbody>{filt.map(u=>{
+          const sn=u.shopId?shops.find(s=>s.id===u.shopId)?.name:"—";
+          const act=u.active!==false;
+          return(<tr key={u.id}><td className="fb2">{u.name}</td><td><span className="bdg bgr">{RL[u.role]||u.role}</span></td><td className="tm">{u.username}</td>
+          <td><div className="fg2"><span style={{fontFamily:"monospace",fontSize:13}}>{sp[u.id]?u.password:"••••••"}</span><button className="btn bg bsm" style={{padding:"3px 8px"}} onClick={()=>setSP(p=>({...p,[u.id]:!p[u.id]}))}>{sp[u.id]?"إخفاء":"إظهار"}</button></div></td>
+          <td className="tm ts">{sn}</td><td><span className={`bdg ${act?"bg2":"br2"}`}>{act?"نشط":"موقوف"}</span></td>
+          <td>{u.role!=="superadmin"&&<button className={`btn bsm ${act?"bw":"bs"}`} onClick={()=>tog(u)}>{act?"تعطيل":"تفعيل"}</button>}</td></tr>);
+        })}</tbody>
+      </table></div></div>
+    </div>
+  );
+}
+
+/* ===== SETTINGS ===== */
+function SettingsPage({user,showMsg}){
+  const [p,setP]=useState({cur:"",nw:"",con:""});
+  const ch=async()=>{
+    const ud=await fbGet(`users/${user.id}`);
+    if(!ud||ud.password!==p.cur){showMsg("كلمة المرور الحالية غلط","error");return;}
+    if(p.nw!==p.con){showMsg("كلمة المرور مش متطابقة","error");return;}
+    if(p.nw.length<4){showMsg("كلمة المرور قصيرة جداً","error");return;}
+    await fbUpd(`users/${user.id}`,{password:p.nw});setP({cur:"",nw:"",con:""});showMsg("تم التغيير ✓");
+  };
+  return(
+    <div className="fi">
+      <div className="ph"><h1>الإعدادات</h1></div>
+      <div className="card" style={{maxWidth:440}}>
+        <div className="ct">🔐 تغيير كلمة المرور</div>
+        <div className="fg"><label>الحالية</label><input type="password" value={p.cur} onChange={e=>setP(x=>({...x,cur:e.target.value}))}/></div>
+        <div className="fg"><label>الجديدة</label><input type="password" value={p.nw} onChange={e=>setP(x=>({...x,nw:e.target.value}))}/></div>
+        <div className="fg"><label>تأكيد</label><input type="password" value={p.con} onChange={e=>setP(x=>({...x,con:e.target.value}))}/></div>
+        <button className="btn ba" onClick={ch}>تحديث</button>
+      </div>
+    </div>
+  );
+}
+
+/* ===== DASHBOARD ===== */
+function DashPage({user}){
+  const [sess,setSess]=useState([]);const [cl,setCl]=useState([]);const [prj,setPrj]=useState([]);const [inv,setInv]=useState([]);const [sh,setSh]=useState([]);
+  useEffect(()=>{
+    if(user.role==="superadmin") return fbOn("shops",v=>setSh(v?Object.values(v):[]));
+    const u1=fbOn(`sessions_${user.shopId}`,v=>setSess(v?Object.values(v):[]));
+    const u2=fbOn(`clients_${user.shopId}`,v=>setCl(v?Object.values(v):[]));
+    const u3=fbOn(`projects_${user.shopId}`,v=>setPrj(v?Object.values(v):[]));
+    const u4=fbOn(`invoices_${user.shopId}`,v=>setInv(v?Object.values(v):[]));
+    return()=>{u1();u2();u3();u4();};
+  },[]);
+  const mr=sess.filter(s=>s.date?.startsWith(thisMonth())).reduce((s,x)=>s+(x.amount||0),0);
+  const tr=sess.filter(s=>s.date===today()).reduce((s,x)=>s+(x.amount||0),0);
+  const ap=prj.filter(p=>p.status==="جاري");
+  const pi=inv.filter(i=>i.payStatus!=="paid");
+  return(
+    <div className="fi">
+      <div className="ph">
+        <div>
+          <h1>{user.role==="superadmin"?"BuildOS Dashboard":`أهلاً، ${user.name} 👋`}</h1>
+          <p>{new Date().toLocaleDateString("ar-EG",{weekday:"long",year:"numeric",month:"long",day:"numeric"})}</p>
+        </div>
+      </div>
+      {user.role==="superadmin"?(
+        <div className="sg">
+          <StatCard icon="🏢" val={sh.length} lbl="شركة مسجلة" cls="sa"/>
+          <StatCard icon="✅" val={sh.filter(s=>s.active).length} lbl="شركة نشطة" cls="sg2"/>
+        </div>
+      ):(
+        <>
+          <div className="sg">
+            <StatCard icon="💵" val={tr.toLocaleString()+" ج"} lbl="إيراد اليوم" cls="sa"/>
+            <StatCard icon="📅" val={mr.toLocaleString()+" ج"} lbl="إيراد الشهر" cls="sg2"/>
+            <StatCard icon="🏗️" val={ap.length} lbl="مشروع جاري" cls="sb2"/>
+            <StatCard icon="🧾" val={pi.length} lbl="فاتورة معلقة" cls="sr"/>
+            <StatCard icon="👥" val={cl.length} lbl="عميل مسجل" cls="sp"/>
+          </div>
+          {ap.length>0&&<div className="card mb16">
+            <div className="ct">🏗️ المشاريع الجارية</div>
+            {ap.slice(0,5).map(p=>(
+              <div key={p.id} style={{display:"flex",justifyContent:"space-between",alignItems:"center",padding:"10px 0",borderBottom:"1px solid var(--brd)"}}>
+                <div><div className="fb2" style={{fontSize:14}}>{p.name}</div><div className="tx tm">{p.clientName} · بدأ {p.startDate}</div></div>
+                <span className="bdg bb2">جاري</span>
+              </div>
+            ))}
+          </div>}
+        </>
+      )}
+    </div>
+  );
+}
+
+/* ===== LEADS PAGE ===== */
+function LeadsPage({user,showMsg}){
+  const [leads,setL]=useState([]);
+  const [sel,setSel]=useState(null);
+  const [filter,setF]=useState("all");
+
+  useEffect(()=>fbOn(`leads_${user.shopId}`,v=>setL(v?Object.values(v).sort((a,b)=>(b.createdAt||0)-(a.createdAt||0)):[])),[]);
+
+  const updateStatus=async(id,status)=>{
+    await fbUpd(`leads_${user.shopId}/${id}`,{status});
+    showMsg("تم التحديث ✓");
+    if(sel?.id===id) setSel(s=>({...s,status}));
+  };
+
+  const convertToClient=async(lead)=>{
+    if(!confirm("تحويل الـ Lead ده لعميل جديد في النظام؟")) return;
+    const existingClients=await fbGet(`clients_${user.shopId}`);
+    const ids=existingClients?Object.keys(existingClients):[];
+    const used=ids.map(id=>parseInt(id)).filter(n=>!isNaN(n));
+    let newId=1;
+    while(used.includes(newId)) newId++;
+    const clientId=String(newId).padStart(3,"0");
+    await fbSet(`clients_${user.shopId}/${clientId}`,{
+      id:clientId,name:lead.name,phone:lead.phone,
+      address:lead.location||"",
+      notes:`مصدر: الموقع الإلكتروني — ${lead.service}${lead.area?` — ${lead.area} م²`:""}${lead.message?" — "+lead.message:""}`,
+      createdAt:lead.date||new Date().toISOString().slice(0,10)
+    });
+    await fbUpd(`leads_${user.shopId}/${lead.id}`,{status:"converted",clientId});
+    showMsg(`تم إنشاء العميل #${clientId} ✓`);
+    setSel(null);
+  };
+
+  const STATUSES=[
+    {id:"all",label:"الكل"},
+    {id:"new",label:"جديد 🔥"},
+    {id:"contacted",label:"تم التواصل"},
+    {id:"converted",label:"تحول لعميل ✓"},
+    {id:"lost",label:"لم يكتمل"},
+  ];
+  const SC={new:"br2",contacted:"bor",converted:"bg2",lost:"bgr"};
+  const SL={new:"جديد 🔥",contacted:"تم التواصل",converted:"تحول لعميل ✓",lost:"لم يكتمل"};
+  const filt=filter==="all"?leads:leads.filter(l=>l.status===filter);
+  const newCount=leads.filter(l=>l.status==="new").length;
+
+  return(
+    <div className="fi">
+      <div className="ph">
+        <div>
+          <h1 style={{display:"flex",alignItems:"center",gap:12}}>
+            طلبات الموقع
+            {newCount>0&&<span className="bdg br2" style={{fontSize:14}}>{newCount} جديد</span>}
+          </h1>
+          <p>العملاء اللي ملوا فورم الطلب على موقع Delta Art</p>
+        </div>
+      </div>
+
+      <div className="chips" style={{marginBottom:16}}>
+        {STATUSES.map(s=>(
+          <div key={s.id} className={`chip ${filter===s.id?"act":""}`} onClick={()=>setF(s.id)}>
+            {s.label}
+          </div>
+        ))}
+      </div>
+
+      {filt.length===0
+        ?<Empty icon="📬" text="مفيش طلبات بعد — شاركوا رابط الموقع!"/>
+        :<div style={{display:"flex",flexDirection:"column",gap:10}}>
+          {filt.map(lead=>(
+            <div key={lead.id} className="card" style={{display:"flex",justifyContent:"space-between",alignItems:"center",flexWrap:"wrap",gap:12}}>
+              <div style={{display:"flex",gap:14,alignItems:"center"}}>
+                <div className="cav">
+                  {lead.name?.split(" ").map(w=>w[0]).join("").slice(0,2).toUpperCase()}
+                </div>
+                <div>
+                  <div className="fb2" style={{fontSize:14}}>{lead.name}</div>
+                  <div className="tx tm">{lead.phone} · <span className="bdg ba2">{lead.service}</span>{lead.area&&` · ${lead.area} م²`}</div>
+                  <div className="tx tm">{lead.location} · {lead.date}</div>
+                </div>
+              </div>
+              <div className="fg2">
+                <span className={`bdg ${SC[lead.status]||"bgr"}`}>{SL[lead.status]||lead.status}</span>
+                {lead.photos?.length>0&&<span className="bdg bb2">📷 {lead.photos.length}</span>}
+                <button className="btn bg bsm" onClick={()=>setSel(lead)}>التفاصيل</button>
+                {lead.status==="new"&&(
+                  <button className="btn bw bsm" onClick={()=>updateStatus(lead.id,"contacted")}>✓ تم التواصل</button>
+                )}
+                {lead.status!=="converted"&&(
+                  <button className="btn bs bsm" onClick={()=>convertToClient(lead)}>👤 تحويل لعميل</button>
+                )}
+              </div>
+            </div>
+          ))}
+        </div>}
+
+      {sel&&<Modal title={`📬 ${sel.name}`} onClose={()=>setSel(null)}>
+        <div style={{background:"var(--bg3)",borderRadius:12,padding:"16px 18px",marginBottom:16}}>
+          <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:12,fontSize:13}}>
+            <div><div className="tx tm">الاسم</div><div className="fb2">{sel.name}</div></div>
+            <div>
+              <div className="tx tm">التليفون</div>
+              <a href={`tel:${sel.phone}`} style={{color:"var(--accent)",fontWeight:700,textDecoration:"none",fontSize:15}}>{sel.phone}</a>
+            </div>
+            <div><div className="tx tm">الخدمة</div><span className="bdg ba2">{sel.service}</span></div>
+            {sel.area&&<div><div className="tx tm">المساحة</div><div className="fb2">{sel.area} م²</div></div>}
+            <div><div className="tx tm">العنوان</div><div>{sel.location}</div></div>
+            <div><div className="tx tm">الوقت</div><div className="tx tm">{sel.date} {sel.time}</div></div>
+          </div>
+          {sel.message&&<div style={{marginTop:12,paddingTop:12,borderTop:"1px solid var(--brd)"}}>
+            <div className="tx tm" style={{marginBottom:4}}>رسالة العميل</div>
+            <div style={{fontSize:13,lineHeight:1.7}}>{sel.message}</div>
+          </div>}
+        </div>
+        {sel.photos?.length>0&&<>
+          <div className="ct" style={{fontSize:13,marginBottom:10}}>📷 صور المكان</div>
+          <div style={{display:"grid",gridTemplateColumns:"repeat(3,1fr)",gap:8,marginBottom:16}}>
+            {sel.photos.map((url,i)=>(
+              <a key={i} href={url} target="_blank" rel="noopener noreferrer">
+                <img src={url} style={{width:"100%",aspectRatio:"1",objectFit:"cover",borderRadius:8,cursor:"pointer",border:"1px solid var(--brd)"}}/>
+              </a>
+            ))}
+          </div>
+        </>}
+        <div className="fg" style={{marginBottom:14}}>
+          <label>تغيير الحالة</label>
+          <div className="chips">
+            {[{id:"new",lb:"جديد"},{id:"contacted",lb:"تم التواصل"},{id:"lost",lb:"لم يكتمل"}].map(s=>(
+              <div key={s.id} className={`chip ${sel.status===s.id?"act":""}`} onClick={()=>updateStatus(sel.id,s.id)}>{s.lb}</div>
+            ))}
+          </div>
+        </div>
+        {sel.status!=="converted"
+          ?<button className="btn ba bfl" onClick={()=>convertToClient(sel)}>👤 تحويل لعميل في النظام</button>
+          :<div style={{textAlign:"center",padding:12,color:"var(--green)",fontWeight:700,fontSize:14}}>✅ تم تحويله لعميل بالفعل</div>}
+      </Modal>}
+    </div>
+  );
+}
+
+
+ReactDOM.createRoot(document.getElementById("root")).render(<App/>);
 </script>
 </body>
 </html>
